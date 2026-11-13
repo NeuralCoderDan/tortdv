@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>ТортДВ — удобный заказ торта</title>
+  <meta name="description" content="Демо-прототип удобного заказа тортов для кондитерской ТортДВ, Хабаровск.">
+
+  <!-- Шрифты: заголовки с засечками, текст — гротеск -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Фильтр «тягучести»: сливает полосу глазури и капли в одну плавную форму -->
+  <svg class="svg-defs" width="0" height="0" aria-hidden="true" focusable="false">
+    <defs>
+      <filter id="goo">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="6"/>
+        <feColorMatrix values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <!-- Тонкая плашка: это прототип -->
+  <div class="demo-bar">Демо-прототип улучшенного заказа</div>
+
+  <!-- Шапка: логотип, короткое меню, корзина (на компьютере) -->
+  <header class="header" id="top">
+    <div class="container header__inner">
+      <a href="#top" class="logo">ТортДВ</a>
+      <nav class="nav" aria-label="Главное меню">
+        <a href="#cakes">Торты</a>
+        <a href="#how">Как заказать</a>
+        <a href="#reviews">Отзывы</a>
+        <a href="#contacts">Контакты</a>
+      </nav>
+      <!-- «Мой заказ»: появляется после оформления, открывает отслеживание -->
+      <button class="order-chip" id="order-chip" type="button" hidden>
+        <span class="order-chip__dot" aria-hidden="true"></span>Мой заказ
+      </button>
+      <button class="cart-icon" id="cart-icon" type="button" aria-label="Корзина пуста">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3.5 9.5h17l-1.6 9a2 2 0 0 1-2 1.6H7.1a2 2 0 0 1-2-1.6l-1.6-9Z"/>
+          <path d="m8 9.5 3-6m5 6-3-6"/>
+        </svg>
+        <span class="badge" id="cart-badge">0</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Первый экран -->
+    <section class="hero">
+      <div class="container hero__grid">
+        <div class="hero__text">
+          <p class="eyebrow reveal">Кондитерская · Хабаровск</p>
+          <h1 class="hero__title reveal">Торт на заказ<br>за <em>пару касаний</em></h1>
+          <p class="hero__lead reveal">Выберите торт и вес, укажите дату и внесите предоплату. Все условия видны сразу, без сюрпризов в конце.</p>
+          <div class="hero__row reveal">
+            <a href="#cakes" class="btn btn--primary btn--lg">Выбрать торт</a>
+            <ul class="hero__facts">
+              <li><b>от 1,5 кг</b>минимальный вес</li>
+              <li><b>7 дней</b>срок заказа</li>
+              <li><b>50%</b>предоплата</li>
+            </ul>
+          </div>
+        </div>
+        <!-- Крупное фото первого торта: вставляет script.js -->
+        <div class="hero__art reveal" id="hero-art"></div>
+      </div>
+      <!-- Розовая глазурь стекает с первого экрана -->
+      <div class="drips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </section>
+
+    <!-- Каталог с быстрыми фильтрами -->
+    <section class="section section--after-drips" id="cakes">
+      <div class="container">
+        <div class="section__head reveal">
+          <p class="eyebrow">Торты</p>
+          <h2 class="section__title">Выберите свой торт</h2>
+        </div>
+        <!-- Плашки по поводу: видны всегда -->
+        <div class="chips reveal" id="filters" role="group" aria-label="Повод"></div>
+
+        <!-- Строка над каталогом: кнопка «Фильтры» (телефон) и «Найдено» -->
+        <div class="toolbar reveal">
+          <button class="filter-btn" id="filter-open" type="button" aria-controls="price-panel">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10m4 0h2M4 17h4m4 0h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+            Фильтры<span class="filter-btn__dot" id="filter-dot" hidden></span>
+          </button>
+          <p class="found" id="found" aria-live="polite"></p>
+          <button class="found__clear" id="filter-clear" type="button" hidden>Сбросить всё</button>
+        </div>
+
+        <!-- Фильтр по цене: на компьютере — строка над карточками, на телефоне — панель снизу -->
+        <div class="price-panel" id="price-panel" role="group" aria-labelledby="price-title">
+          <div class="price-panel__grip" aria-hidden="true"></div>
+
+          <!-- Повод: те же разделы, что и плашками наверху, можно выбрать несколько -->
+          <div class="filter-group filter-group--tags">
+            <h3 class="filter-group__title">Повод</h3>
+            <div class="tag-picks" id="filter-tags"></div>
+          </div>
+
+          <div class="price-panel__head">
+            <h3 class="price-panel__title" id="price-title">
+              Цена за торт
+              <!-- Выбор веса: варианты подставляет script.js из data.js -->
+              <span class="weight-pick">
+                <select id="filter-weight" aria-label="Вес торта для фильтра по цене"></select>
+                <svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg>
+              </span>
+            </h3>
+            <button class="icon-btn price-panel__close" id="filter-close" type="button" aria-label="Закрыть фильтры">×</button>
+          </div>
+          <!-- Пояснение про торты с фиксированным весом и на сколько гостей хватит -->
+          <p class="price-panel__note"><span id="filter-guests"></span><span id="price-note"></span></p>
+
+          <div class="price">
+            <div class="price__inputs">
+              <label class="price__field"><span>от</span><input type="text" inputmode="numeric" id="price-from" aria-label="Цена от, ₽"><i>₽</i></label>
+              <span class="price__dash" aria-hidden="true">—</span>
+              <label class="price__field"><span>до</span><input type="text" inputmode="numeric" id="price-to" aria-label="Цена до, ₽"><i>₽</i></label>
+            </div>
+            <!-- Ползунок с двумя ручками: два range поверх общей дорожки -->
+            <div class="range" id="range">
+              <div class="range__track"><div class="range__fill" id="range-fill"></div></div>
+              <input type="range" id="range-from" aria-label="Цена от">
+              <input type="range" id="range-to" aria-label="Цена до">
+            </div>
+          </div>
+
+          <!-- Порядок карточек -->
+          <label class="filter-group filter-group--sort">
+            <span class="filter-group__title">Сортировка</span>
+            <span class="sort-pick">
+              <select id="filter-sort" aria-label="Порядок тортов в каталоге"></select>
+              <svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg>
+            </span>
+          </label>
+
+          <div class="price-panel__foot">
+            <button class="btn btn--ghost" id="filter-reset" type="button">Сбросить</button>
+            <button class="btn btn--primary" id="filter-apply" type="button">Показать</button>
+          </div>
+        </div>
+
+        <div class="catalog" id="catalog"></div>
+
+        <!-- Пусто: ничего не подошло -->
+        <div class="catalog__empty" id="catalog-empty" hidden>
+          <p>Нет тортов в этом диапазоне</p>
+          <button class="btn btn--ghost" id="empty-reset" type="button">Сбросить</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Как заказать: 3 шага -->
+    <section class="section section--choco" id="how">
+      <div class="container">
+        <div class="section__head reveal">
+          <p class="eyebrow">Как заказать</p>
+          <h2 class="section__title">Три шага — и торт ваш</h2>
+        </div>
+        <ol class="steps">
+          <li class="step reveal">
+            <span class="step__icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32"><path d="M6 17h20v9H6z"/><path d="M8 17v-5h16v5"/><path d="M16 12V7m-4 5V9m8 3V9"/><path d="M16 5.5c1 0 1-1.5 0-2.5-1 1-1 2.5 0 2.5Z"/></svg>
+            </span>
+            <b class="step__title">Выбрали торт</b>
+            <span class="step__text">И сразу вес — цена видна на карточке.</span>
+          </li>
+          <li class="step reveal">
+            <span class="step__icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32"><rect x="5" y="7" width="22" height="20" rx="3"/><path d="M5 13h22M11 4v6m10-6v6"/><path d="m12 20 3 3 6-6"/></svg>
+            </span>
+            <b class="step__title">Выбрали дату</b>
+            <span class="step__text">Не раньше чем через 7 дней — календарь подскажет.</span>
+          </li>
+          <li class="step reveal">
+            <span class="step__icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32"><rect x="4" y="8" width="24" height="17" rx="3"/><path d="M4 13h24M9 20h5"/></svg>
+            </span>
+            <b class="step__title">Внесли предоплату</b>
+            <span class="step__text">50% по СБП — и мы начинаем готовить.</span>
+          </li>
+        </ol>
+      </div>
+      <!-- Шоколадная глазурь стекает на следующий блок -->
+      <div class="drips drips--choco" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </section>
+
+    <!-- Отзывы: только заглушки, без выдуманных текстов -->
+    <section class="section section--after-drips" id="reviews">
+      <div class="container">
+        <div class="section__head reveal">
+          <p class="eyebrow">Отзывы</p>
+          <h2 class="section__title">Что говорят гости</h2>
+        </div>
+        <div class="reviews">
+          <article class="review reveal" aria-label="Место для отзыва">
+            <div class="review__head"><span class="ph ph--avatar"></span><span class="ph ph--name"></span></div>
+            <span class="ph ph--line"></span><span class="ph ph--line"></span><span class="ph ph--line ph--short"></span>
+            <p class="review__note">Здесь будут ваши настоящие отзывы с 2ГИС и Фламп</p>
+          </article>
+          <article class="review reveal" aria-label="Место для отзыва">
+            <div class="review__head"><span class="ph ph--avatar"></span><span class="ph ph--name"></span></div>
+            <span class="ph ph--line"></span><span class="ph ph--line"></span><span class="ph ph--line ph--short"></span>
+            <p class="review__note">Здесь будут ваши настоящие отзывы с 2ГИС и Фламп</p>
+          </article>
+          <article class="review reveal" aria-label="Место для отзыва">
+            <div class="review__head"><span class="ph ph--avatar"></span><span class="ph ph--name"></span></div>
+            <span class="ph ph--line"></span><span class="ph ph--line"></span><span class="ph ph--line ph--short"></span>
+            <p class="review__note">Здесь будут ваши настоящие отзывы с 2ГИС и Фламп</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Частые вопросы: ответы раскрываются по нажатию -->
+    <section class="section section--alt" id="faq">
+      <div class="container faq">
+        <div class="section__head reveal">
+          <p class="eyebrow">Частые вопросы</p>
+          <h2 class="section__title">Коротко о важном</h2>
+        </div>
+        <div class="faq__list">
+          <details class="faq__item reveal">
+            <summary>За сколько дней нужно заказывать?</summary>
+            <p>Минимум за 7 дней до нужной даты. В календаре при оформлении более ранние даты просто недоступны.</p>
+          </details>
+          <details class="faq__item reveal">
+            <summary>Как работает предоплата?</summary>
+            <p>При заказе вносится 50% по СБП — после этого мы начинаем готовить торт. Остаток оплачивается при получении.</p>
+          </details>
+          <details class="faq__item reveal">
+            <summary>Как получить торт?</summary>
+            <p>Самовывоз: пер. Фабричный, 25. Или Яндекс.Доставка — она оплачивается отдельно по тарифу сервиса.</p>
+          </details>
+          <details class="faq__item reveal">
+            <summary>У меня аллергия. Что делать?</summary>
+            <p>Напишите об этом в комментарии к заказу. Кондитер свяжется с вами и подскажет по составу до начала работы.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Контакты -->
+  <footer class="footer" id="contacts">
+    <div class="container">
+      <p class="footer__brand">ТортДВ</p>
+      <ul class="footer__list">
+        <li><span>Самовывоз</span>пер. Фабричный, 25</li>
+        <li><span>Телефон</span><a href="tel:+79625009949">+7 962 500-99-49</a></li>
+        <li><span>Почта</span><a href="mailto:zakaz@tortdv.ru">zakaz@tortdv.ru</a></li>
+        <li><span>Доставка</span>Яндекс.Доставка, оплачивается отдельно</li>
+      </ul>
+      <!-- Ссылку с номером из data.js подставляет script.js -->
+      <a class="btn btn--wa" id="footer-wa" href="#" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3Z"/><path d="M9 8.5c0 3.5 3 6.5 6.5 6.5l1-1.6-2-1-1 .8c-1-.5-2-1.5-2.4-2.4l.8-1-1-2z"/></svg>
+        Написать в WhatsApp
+      </a>
+    </div>
+  </footer>
+
+  <!-- Липкая полоса корзины (на телефоне) -->
+  <button class="cart-bar" id="cart-bar" type="button" hidden>
+    <span class="cart-bar__icon" id="cart-bar-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M3.5 9.5h17l-1.6 9a2 2 0 0 1-2 1.6H7.1a2 2 0 0 1-2-1.6l-1.6-9Z"/><path d="m8 9.5 3-6m5 6-3-6"/></svg>
+    </span>
+    <span class="cart-bar__text" id="cart-bar-text">1 торт · 0 ₽</span>
+    <span class="cart-bar__cta">Оформить →</span>
+  </button>
+
+  <div class="overlay" id="overlay"></div>
+  <div class="overlay overlay--filters" id="filter-overlay"></div>
+
+  <!-- Панель оформления: выезжает снизу -->
+  <section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div class="sheet__grip" aria-hidden="true"></div>
+    <div class="sheet__head">
+      <h2 class="sheet__title" id="sheet-title">Оформление заказа</h2>
+      <button class="icon-btn" id="sheet-close" type="button" aria-label="Закрыть">×</button>
+    </div>
+
+    <div class="sheet__body">
+      <ul class="lines" id="lines"></ul>
+
+      <form class="form" id="order-form" novalidate>
+        <label class="field">
+          <span class="field__label">Дата</span>
+          <input type="date" id="f-date" required>
+          <span class="field__hint">Принимаем заказы минимум за 7 дней</span>
+        </label>
+
+        <div class="field">
+          <span class="field__label">Как получить</span>
+          <div class="segmented">
+            <label><input type="radio" name="delivery" value="pickup" checked><span>Самовывоз</span></label>
+            <label><input type="radio" name="delivery" value="yandex"><span>Яндекс.Доставка</span></label>
+          </div>
+          <span class="field__hint" id="delivery-hint">пер. Фабричный, 25</span>
+        </div>
+
+        <label class="field" id="address-field" hidden>
+          <span class="field__label">Адрес доставки</span>
+          <input type="text" id="f-address" autocomplete="street-address" placeholder="Улица, дом, квартира">
+        </label>
+
+        <div class="form__row">
+          <label class="field">
+            <span class="field__label">Имя</span>
+            <input type="text" id="f-name" autocomplete="given-name" required>
+          </label>
+          <label class="field">
+            <span class="field__label">Телефон</span>
+            <input type="tel" id="f-phone" autocomplete="tel" inputmode="tel" placeholder="+7" required>
+          </label>
+        </div>
+
+        <label class="field">
+          <span class="field__label">Надпись на торте <i>(необязательно)</i></span>
+          <textarea id="f-text" rows="2" maxlength="120" placeholder="Например: «С днём рождения, Аня!»"></textarea>
+        </label>
+
+        <label class="field">
+          <span class="field__label">Комментарий <i>(необязательно)</i></span>
+          <textarea id="f-comment" rows="2" maxlength="300" placeholder="Пожелания по декору, аллергии, удобное время"></textarea>
+        </label>
+
+        <!-- Фото-пример: остаётся на устройстве, в чат его прикрепляет сам клиент -->
+        <div class="field">
+          <span class="field__label">Фото-пример <i>(необязательно)</i></span>
+          <label class="ref" id="ref-pick">
+            <input type="file" id="f-ref" accept="image/*">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10.5" r="1.8"/><path d="m4 17 5-4.5 3.5 3 3-2.5 4.5 4"/></svg>
+            <span>Добавить фото торта, который нравится</span>
+          </label>
+          <div class="ref-preview" id="ref-preview" hidden>
+            <img id="ref-img" alt="Фото-пример">
+            <span id="ref-name"></span>
+            <button type="button" id="ref-remove">Убрать</button>
+          </div>
+          <span class="field__hint">Фото не уходит с сайта само: после отправки заказа прикрепите его в чат WhatsApp</span>
+        </div>
+      </form>
+    </div>
+
+    <div class="sheet__foot">
+      <div class="sum">
+        <div><span>Итого</span><b id="sum-total">0 ₽</b></div>
+        <div class="sum__prepay"><span>Предоплата 50%</span><b id="sum-prepay">0 ₽</b></div>
+      </div>
+      <p class="form-error" id="form-error" role="alert" hidden></p>
+      <div class="sheet__actions">
+        <button class="btn btn--primary btn--lg" id="pay-btn" type="button">Внести предоплату по СБП</button>
+        <a class="btn btn--ghost" id="wa-btn" href="#" target="_blank" rel="noopener">Отправить заказ в WhatsApp</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Окно оплаты: демо-заглушка СБП -->
+  <div class="modal" id="pay-modal" role="dialog" aria-modal="true" aria-labelledby="pay-title" hidden>
+    <div class="modal__card">
+      <button class="icon-btn modal__close" id="pay-close" type="button" aria-label="Закрыть">×</button>
+      <h2 class="modal__title" id="pay-title">Предоплата по СБП</h2>
+      <p class="modal__sum" id="pay-sum">0 ₽</p>
+      <div class="qr" id="qr" aria-hidden="true"></div>
+      <p class="modal__note">Демо: здесь будет оплата через СБП или ЮKassa</p>
+      <button class="btn btn--primary modal__done" id="pay-done" type="button">Готово, я оплатил</button>
+      <p class="modal__hint">В демо деньги не списываются — кнопка показывает, что будет после оплаты</p>
+    </div>
+  </div>
+
+  <!-- Экран «Заказ принят»: статусы заказа, а после получения — отзыв и вопрос -->
+  <div class="track" id="track" role="dialog" aria-modal="true" aria-labelledby="track-title" hidden>
+    <div class="track__card">
+      <div class="sprinkles" id="sprinkles" aria-hidden="true"></div>
+      <button class="icon-btn track__close" id="track-close" type="button" aria-label="Закрыть">×</button>
+
+      <p class="eyebrow" id="track-number"></p>
+      <h2 class="track__title" id="track-title"></h2>
+      <p class="track__lead" id="track-lead"></p>
+
+      <!-- Статусы рисует script.js -->
+      <ol class="track__steps" id="track-steps"></ol>
+
+      <div class="track__summary" id="track-summary"></div>
+      <p class="track__ref" id="track-ref" hidden>Не забудьте прикрепить фото-пример в чат WhatsApp</p>
+
+      <!-- Появляется, когда торт получен -->
+      <div class="after" id="after" hidden>
+        <div class="after__block">
+          <h3 class="after__title">Как вам торт?</h3>
+          <p class="after__text">Оставьте, пожалуйста, отзыв — это необязательно, но очень помогает.</p>
+          <div class="stars" id="stars" role="radiogroup" aria-label="Оценка торта">
+            <button type="button" role="radio" aria-checked="false" data-star="1" aria-label="1 из 5">★</button>
+            <button type="button" role="radio" aria-checked="false" data-star="2" aria-label="2 из 5">★</button>
+            <button type="button" role="radio" aria-checked="false" data-star="3" aria-label="3 из 5">★</button>
+            <button type="button" role="radio" aria-checked="false" data-star="4" aria-label="4 из 5">★</button>
+            <button type="button" role="radio" aria-checked="false" data-star="5" aria-label="5 из 5">★</button>
+          </div>
+          <textarea id="review-text" rows="2" maxlength="500" placeholder="Пара слов о торте" aria-label="Текст отзыва"></textarea>
+          <button class="btn btn--primary" id="review-send" type="button">Оставить отзыв</button>
+          <p class="after__thanks" id="review-thanks" role="status" hidden></p>
+        </div>
+
+        <div class="after__block">
+          <h3 class="after__title">Вопрос по торту</h3>
+          <p class="after__text">Как хранить, что в составе, можно ли детям — спросите, ответим в WhatsApp.</p>
+          <textarea id="question-text" rows="2" maxlength="500" placeholder="Ваш вопрос" aria-label="Вопрос по торту"></textarea>
+          <a class="btn btn--ghost" id="question-send" href="#" target="_blank" rel="noopener">Задать вопрос в WhatsApp</a>
+          <p class="after__thanks" id="question-error" role="alert" hidden>Сначала напишите вопрос.</p>
+        </div>
+      </div>
+
+      <!-- Только для демо: статусы на рабочем сайте меняет владелец -->
+      <div class="track__demo">
+        <button class="btn btn--ghost" id="track-next" type="button">Демо: следующий статус →</button>
+        <p>На рабочем сайте статус меняет кондитерская — клиент просто видит, где его торт.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Страница торта: открывается нажатием на карточку ниже фото -->
+  <div class="pd" id="pd" role="dialog" aria-modal="true" aria-labelledby="pd-name" hidden>
+    <div class="pd__bar">
+      <button class="pd__back" id="pd-close" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>
+        Все торты
+      </button>
+      <span class="pd__crumb" id="pd-crumb"></span>
+    </div>
+
+    <div class="pd__scroll" id="pd-scroll">
+      <div class="pd__wrap">
+        <!-- Фото и миниатюры -->
+        <div class="pd__media">
+          <button class="pd__photo" id="pd-photo" type="button" aria-label="Открыть фото на весь экран"></button>
+          <div class="pd__thumbs" id="pd-thumbs"></div>
+        </div>
+
+        <!-- Название, цена, вес, кнопки -->
+        <div class="pd__buy">
+          <h2 class="pd__name" id="pd-name"></h2>
+          <p class="pd__sub" id="pd-sub"></p>
+
+          <div class="pd__weights" id="pd-weights"></div>
+
+          <div class="pd__price">
+            <span class="pd__price-value" id="pd-price"></span>
+            <span class="pd__price-note" id="pd-price-note"></span>
+          </div>
+
+          <div class="pd__actions">
+            <button class="btn btn--primary btn--lg" id="pd-add" type="button">В корзину</button>
+            <button class="btn btn--ghost btn--lg" id="pd-quick" type="button">Купить в 1 клик</button>
+          </div>
+
+          <ul class="pd__notes">
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>Под заказ, за 7 дней</li>
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>Самовывоз или Яндекс.Доставка</li>
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>Предоплата 50% по СБП</li>
+          </ul>
+
+          <!-- Короткие характеристики с фото -->
+          <dl class="pd__facts" id="pd-facts"></dl>
+        </div>
+      </div>
+
+      <!-- Вкладки: описание, состав, оплата, доставка -->
+      <div class="pd__wrap pd__wrap--tabs">
+        <div class="pd__tabs" id="pd-tabs" role="tablist"></div>
+        <div class="pd__panel" id="pd-panel" role="tabpanel"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Галерея: фото торта на весь экран + 5 ракурсов -->
+  <div class="lb" id="lightbox" role="dialog" aria-modal="true" aria-labelledby="lb-title" hidden>
+    <div class="lb__top">
+      <div>
+        <h2 class="lb__title" id="lb-title"></h2>
+        <p class="lb__label"><span id="lb-label"></span> · <span id="lb-count"></span></p>
+      </div>
+      <button class="icon-btn lb__close" id="lb-close" type="button" aria-label="Закрыть галерею">×</button>
+    </div>
+
+    <div class="lb__stage" id="lb-stage">
+      <button class="lb__arrow lb__arrow--prev" id="lb-prev" type="button" aria-label="Предыдущее фото">‹</button>
+      <div class="lb__frame" id="lb-frame"></div>
+      <button class="lb__arrow lb__arrow--next" id="lb-next" type="button" aria-label="Следующее фото">›</button>
+    </div>
+
+    <div class="lb__thumbs" id="lb-thumbs" role="group" aria-label="Все фото торта"></div>
+  </div>
+
+  <!-- Сначала данные, потом логика -->
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
