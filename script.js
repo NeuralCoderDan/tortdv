@@ -177,7 +177,7 @@ function renderCatalog() {
         </span>
       </button>
       <div class="card__body">
-        <h3 class="card__name"><span>${cake.name}</span></h3>
+        <h3 class="card__name" title="${cake.name}"><span>${cake.name}</span></h3>
         <p class="card__desc">${cake.desc}</p>
         <p class="terms">${cake.fixed ? cake.fixed.weight : "от " + kilos(CONFIG.weights[0])} · ${rules}</p>
         ${weightsHTML(cake)}
@@ -1247,22 +1247,6 @@ function setupTrack() {
 
 /* ===================== Появление блоков при прокрутке ===================== */
 
-function setupReveal() {
-  $("#catalog").classList.add("reveal");
-  const blocks = $$(".reveal");
-  if (!("IntersectionObserver" in window)) {
-    blocks.forEach((block) => block.classList.add("is-visible"));
-    return;
-  }
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (!entry.isIntersecting) return;
-      entry.target.classList.add("is-visible");
-      observer.unobserve(entry.target);
-    });
-  }, { threshold: 0.1 });
-  blocks.forEach((block) => observer.observe(block));
-}
 
 /* ===================== Галерея фото ===================== */
 
@@ -1376,7 +1360,28 @@ document.documentElement.classList.add("js");
 document.addEventListener("DOMContentLoaded", () => {
   renderFilters();
   renderCatalog();
-  $("#hero-art").innerHTML = mediaHTML(CAKES[0], false);
+  $("#hero-photos").innerHTML = CAKES.slice(0, 3).map((cake) => `
+    <button class="hero__photo" type="button" data-cake="${cake.id}">
+      ${mediaHTML(cake, false)}
+      <span>${cake.name}</span>
+    </button>`).join("");
+  $("#hero-photos").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-cake]");
+    if (button) openProduct(button.dataset.cake, button);
+  });
+
+  // Логотип: картинка из data.js, если указана; иначе остаётся текст «ТортДВ»
+  if (CONFIG.logo) {
+    const img = document.createElement("img");
+    img.src = CONFIG.logo;
+    img.alt = "ТортДВ";
+    img.onerror = () => img.replaceWith("ТортДВ"); // файл не нашёлся — снова текст
+    $("#logo").replaceChildren(img);
+  }
+
+  // Шапка: «Позвонить» и «WhatsApp» — номера из data.js
+  $("#head-call").href = `tel:${CONFIG.phone.replace(/[^\d+]/g, "")}`;
+  $("#head-wa").href = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent("Здравствуйте! Хочу заказать торт.")}`;
   setupPriceFilter();
   updateCartUI();
   // Телефон в подвале — тоже из data.js
@@ -1389,8 +1394,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const dateInput = $("#f-date");
   dateInput.min = dateFromToday(CONFIG.minDays);
   dateInput.value = dateInput.min;
-
-  setupReveal();
   setupGallery();
   setupTrack();
   setupProduct();

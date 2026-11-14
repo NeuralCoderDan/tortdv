@@ -3,11 +3,13 @@
   --cream: #f6f2ea;        /* основной фон */
   --cream-deep: #efe7da;   /* фон вставок */
   --paper: #ffffff;        /* карточки и панели */
-  --powder: #f7dfe3;       /* светлая ягодная подложка */
-  --rose: #c2133f;         /* ягодный акцент */
-  --rose-light: #e0506f;
-  --choco: #251a15;        /* тёмный текст */
-  --choco-soft: #756056;   /* второстепенный текст */
+  --powder: #f8e1ea;       /* светло-малиновая подложка */
+  --rose: #c8155c;         /* малиново-розовый из логотипа: кнопки и акценты */
+  --rose-dark: #a50f4a;    /* он же при наведении */
+  --rose-light: #e45a8f;
+  --plum: #3b1e4f;         /* тёмно-фиолетовый из логотипа: тёмные блоки */
+  --choco: #2a1a30;        /* основной текст — почти чёрный с фиолетовым */
+  --choco-soft: #6c5a70;   /* второстепенный текст */
   --line: #e4dacd;         /* тонкие линии */
 
   /* Одна гарнитура в разных насыщенностях: заголовки плотные, текст обычный */
@@ -17,8 +19,9 @@
   --radius: 18px;
   --gutter: 16px;
   --bar-h: 0px; /* высота липкой полосы корзины, задаёт script.js */
-  --shadow-soft: 0 1px 2px rgba(37, 26, 21, 0.04), 0 10px 24px -16px rgba(37, 26, 21, 0.3);
-  --shadow-lift: 0 2px 6px rgba(37, 26, 21, 0.06), 0 22px 40px -22px rgba(37, 26, 21, 0.4);
+  /* Тени — едва заметные, только чтобы отделить карточку от фона */
+  --shadow-soft: 0 1px 2px rgba(42, 26, 48, 0.06);
+  --shadow-lift: 0 6px 16px -10px rgba(42, 26, 48, 0.25);
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* «пружинка» */
   --smooth: cubic-bezier(0.22, 0.8, 0.26, 1);
 }
@@ -141,7 +144,7 @@ textarea {
 /* Наведение: кнопка темнеет, без «растягивания» */
 @media (hover: hover) {
   .btn--primary:hover {
-    background: #a50f35;
+    background: var(--rose-dark);
   }
 
   .btn--ghost:hover {
@@ -171,7 +174,6 @@ textarea {
 
 .icon-btn:hover {
   background: var(--cream-deep);
-  transform: rotate(90deg);
 }
 
 /* ===== Шапка ===== */
@@ -179,10 +181,8 @@ textarea {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: rgba(251, 245, 236, 0.86);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(234, 217, 200, 0.6);
+  background: var(--cream);
+  border-bottom: 1px solid var(--line);
 }
 
 .header__inner {
@@ -248,7 +248,7 @@ textarea {
 
 .cart-icon:hover {
   transform: scale(1.08);
-  box-shadow: 0 0 0 6px rgba(207, 122, 142, 0.14), var(--shadow-lift);
+  box-shadow: 0 0 0 6px rgba(200, 21, 92, 0.14), var(--shadow-lift);
 }
 
 .cart-icon svg,
@@ -307,53 +307,59 @@ textarea {
 
 /* ===== Первый экран ===== */
 .hero {
-  padding: 44px 0 36px;
-  background:
-    radial-gradient(60% 60% at 90% 10%, rgba(243, 211, 217, 0.8), transparent 70%),
-    radial-gradient(50% 50% at 0% 100%, rgba(241, 226, 200, 0.9), transparent 70%);
-}
-
-.hero__grid {
-  display: grid;
-  gap: 28px;
-}
-
-/* Фото первого торта: на телефоне — над заголовком */
-.hero__art {
-  order: -1;
-}
-
-.hero__art .media {
-  aspect-ratio: 1 / 1; /* фото тортов квадратные — так они не обрезаются */
-  margin: 0;
-  border-radius: 32px;
-  box-shadow: 0 30px 60px -28px rgba(59, 34, 25, 0.45), 0 8px 18px -10px rgba(59, 34, 25, 0.2);
-  animation: float 7s ease-in-out infinite; /* медленное «парение» */
-}
-
-@keyframes float {
-  50% { transform: translateY(-12px); }
+  padding: 28px 0 8px;
 }
 
 .hero__title {
-  margin: 0 0 16px;
+  margin: 0 0 10px;
   font-family: var(--display);
-  font-size: clamp(40px, 10vw, 72px);
+  font-size: clamp(32px, 8.5vw, 56px);
   font-weight: 800;
-  line-height: 1.02;
-  letter-spacing: -0.045em;
-}
-
-.hero__title em {
-  font-style: normal;
-  color: var(--rose);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--plum);
 }
 
 .hero__lead {
   max-width: 32em;
-  margin: 0 0 26px;
+  margin: 0 0 20px;
   font-size: 17px;
   color: var(--choco-soft);
+}
+
+/* Три торта в ряд — по нажатию открывается страница торта */
+.hero__photos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.hero__photo {
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+.hero__photo .media {
+  aspect-ratio: 1 / 1;
+  margin: 0;
+  border-radius: 12px;
+}
+
+.hero__photo span {
+  display: block;
+  margin-top: 6px;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* ===== Секции ===== */
@@ -504,7 +510,7 @@ textarea {
   padding: 0 20px calc(16px + env(safe-area-inset-bottom));
   background: var(--cream);
   border-radius: 28px 28px 0 0;
-  box-shadow: 0 -30px 60px -30px rgba(59, 34, 25, 0.5);
+  box-shadow: 0 -1px 0 var(--line);
   transform: translateY(105%);
   visibility: hidden;
   transition: transform 0.5s var(--smooth), visibility 0s 0.5s;
@@ -573,7 +579,7 @@ textarea {
 }
 
 .weight-pick select:hover {
-  box-shadow: 0 0 0 5px rgba(207, 122, 142, 0.18);
+  box-shadow: 0 0 0 5px rgba(200, 21, 92, 0.18);
 }
 
 .weight-pick select:active {
@@ -781,7 +787,7 @@ textarea {
 
 .price__field:focus-within {
   border-color: var(--rose-light);
-  box-shadow: 0 0 0 4px rgba(207, 122, 142, 0.18);
+  box-shadow: 0 0 0 4px rgba(200, 21, 92, 0.18);
 }
 
 .price__field span,
@@ -860,7 +866,7 @@ textarea {
   border: 3px solid var(--rose);
   border-radius: 50%;
   background: var(--paper);
-  box-shadow: 0 4px 10px -2px rgba(59, 34, 25, 0.35);
+  box-shadow: 0 4px 10px -2px rgba(42, 26, 48, 0.35);
   pointer-events: none;
   -webkit-appearance: none;
   appearance: none;
@@ -873,7 +879,7 @@ textarea {
   border: 3px solid var(--rose);
   border-radius: 50%;
   background: var(--paper);
-  box-shadow: 0 4px 10px -2px rgba(59, 34, 25, 0.35);
+  box-shadow: 0 4px 10px -2px rgba(42, 26, 48, 0.35);
   pointer-events: none;
 }
 
@@ -890,7 +896,7 @@ textarea {
 }
 
 .range input:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 6px rgba(207, 122, 142, 0.3);
+  box-shadow: 0 0 0 6px rgba(200, 21, 92, 0.3);
 }
 
 .price-panel__foot {
@@ -915,7 +921,6 @@ textarea {
 /* Карточка уходит и возвращается при смене фильтра */
 .card.is-out {
   opacity: 0;
-  transform: scale(0.94) translateY(12px);
 }
 
 /* Фото торта: крупно, со скруглением */
@@ -925,7 +930,7 @@ textarea {
   margin: 10px 10px 0;
   overflow: hidden;
   border-radius: 18px;
-  background: radial-gradient(90% 90% at 50% 30%, #fffdf9, var(--tint, var(--powder)));
+  background: var(--tint, var(--powder));
 }
 
 .media img {
@@ -969,12 +974,8 @@ textarea {
 
 @media (hover: hover) {
   .card:hover {
-    transform: translateY(-8px);
+    transform: scale(1.02);
     box-shadow: var(--shadow-lift);
-  }
-
-  .card:hover .media img {
-    transform: scale(1.06);
   }
 }
 
@@ -1025,7 +1026,7 @@ textarea {
   font-size: 11px;
   font-weight: 600;
   color: var(--choco);
-  box-shadow: 0 4px 10px -6px rgba(59, 34, 25, 0.5);
+  box-shadow: 0 4px 10px -6px rgba(42, 26, 48, 0.5);
   transition: transform 0.4s var(--spring);
 }
 
@@ -1197,7 +1198,7 @@ textarea {
   overflow: hidden;
   border-radius: 18px;
   pointer-events: none;
-  box-shadow: 0 16px 30px -12px rgba(59, 34, 25, 0.45);
+  box-shadow: var(--shadow-soft);
   will-change: transform;
 }
 
@@ -1304,9 +1305,8 @@ textarea {
   display: block;
   height: 12px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #ece4dc 25%, #f5efe9 50%, #ece4dc 75%);
+  background: #ece4dc;
   background-size: 200% 100%;
-  animation: shimmer 2.4s linear infinite;
 }
 
 .ph--avatar {
@@ -1323,11 +1323,6 @@ textarea {
 
 .ph--short {
   width: 60%;
-}
-
-@keyframes shimmer {
-  from { background-position: 200% 0; }
-  to { background-position: -200% 0; }
 }
 
 .review__note {
@@ -1373,7 +1368,7 @@ textarea {
   margin-top: 26px;
   background: #1f9d57;
   color: #fff;
-  box-shadow: 0 10px 22px -12px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--shadow-soft);
 }
 
 .btn--wa svg {
@@ -1388,7 +1383,7 @@ textarea {
 @media (hover: hover) {
   .btn--wa:hover {
     padding-inline: 30px;
-    box-shadow: 0 0 0 6px rgba(31, 157, 87, 0.22), 0 14px 28px -12px rgba(0, 0, 0, 0.6);
+    box-shadow: var(--shadow-soft);
   }
 }
 
@@ -1416,7 +1411,7 @@ textarea {
   border-radius: 20px;
   background: var(--choco);
   color: var(--cream);
-  box-shadow: 0 16px 34px -12px rgba(59, 34, 25, 0.6);
+  box-shadow: var(--shadow-soft);
   cursor: pointer;
   text-align: left;
   animation: bar-in 0.5s var(--spring);
@@ -1460,7 +1455,7 @@ textarea {
   position: fixed;
   inset: 0;
   z-index: 90;
-  background: rgba(59, 34, 25, 0.45);
+  background: rgba(42, 26, 48, 0.45);
   backdrop-filter: blur(3px);
   opacity: 0;
   visibility: hidden;
@@ -1486,7 +1481,7 @@ textarea {
   max-height: 92dvh;
   background: var(--cream);
   border-radius: 28px 28px 0 0;
-  box-shadow: 0 -30px 60px -30px rgba(59, 34, 25, 0.5);
+  box-shadow: 0 -1px 0 var(--line);
   transform: translateY(105%);
   visibility: hidden;
   transition: transform 0.55s var(--smooth), visibility 0s 0.55s;
@@ -1672,7 +1667,7 @@ textarea {
 .field textarea:focus {
   outline: none;
   border-color: var(--rose-light);
-  box-shadow: 0 0 0 4px rgba(207, 122, 142, 0.18);
+  box-shadow: 0 0 0 4px rgba(200, 21, 92, 0.18);
 }
 
 .field .is-invalid {
@@ -1712,7 +1707,7 @@ textarea {
 .segmented input:checked + span {
   background: var(--paper);
   color: var(--choco);
-  box-shadow: 0 4px 12px -6px rgba(59, 34, 25, 0.35);
+  box-shadow: 0 4px 12px -6px rgba(42, 26, 48, 0.35);
 }
 
 .segmented input:focus-visible + span {
@@ -1783,7 +1778,7 @@ textarea {
   display: grid;
   place-items: center;
   padding: var(--gutter);
-  background: rgba(59, 34, 25, 0.5);
+  background: rgba(42, 26, 48, 0.5);
   animation: fade 0.3s ease;
 }
 
@@ -1856,7 +1851,7 @@ textarea {
   display: flex;
   flex-direction: column;
   padding: calc(10px + env(safe-area-inset-top)) var(--gutter) calc(14px + env(safe-area-inset-bottom));
-  background: rgba(33, 19, 14, 0.94);
+  background: rgba(42, 26, 48, 0.94);
   backdrop-filter: blur(8px);
   color: var(--cream);
   animation: fade 0.3s ease;
@@ -1924,7 +1919,7 @@ textarea {
   height: 100%;
   margin: 0;
   border-radius: 22px;
-  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--shadow-soft);
 }
 
 .lb__frame .media:not(.no-photo) {
@@ -2070,18 +2065,6 @@ textarea {
   }
 }
 
-/* ===== Появление блоков при прокрутке ===== */
-.js .reveal {
-  opacity: 0;
-  transform: translateY(26px);
-  transition: opacity 0.8s var(--smooth), transform 0.8s var(--smooth);
-}
-
-.js .reveal.is-visible {
-  opacity: 1;
-  transform: none;
-}
-
 /* ===== Планшеты ===== */
 @media (min-width: 640px) {
   :root {
@@ -2162,14 +2145,12 @@ textarea {
     display: grid;
   }
 
-  .hero__grid {
-    grid-template-columns: 1.1fr 0.9fr;
-    align-items: center;
-    gap: 56px;
+  .hero__photos {
+    gap: 16px;
   }
 
-  .hero__art {
-    order: 0;
+  .hero__photo span {
+    font-size: 15px;
   }
 
   .footer__list {
@@ -2272,7 +2253,7 @@ textarea {
   }
 
   .hero {
-    padding: 90px 0 70px;
+    padding: 56px 0 16px;
   }
 
   .hero__lead {
@@ -2294,8 +2275,8 @@ textarea {
 
   /* Компьютер: 4 карточки в ряд, вес — в одну строку */
   .catalog {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 22px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
   }
 
   .card .media {
@@ -2321,122 +2302,12 @@ textarea {
 }
 
 /* =====================================================================
-   «ТАЮЩИЙ» ДИЗАЙН: глазурь, мягкие появления, шоколадный блок
+   ДОПОЛНЕНИЯ: первый экран, тёмный блок, «Мой заказ», страница торта
    ===================================================================== */
 
-:root {
-  --hero: #f7e2e3; /* розовая глазурь первого экрана */
-}
-
-.svg-defs {
-  position: absolute;
-}
-
-/* Полоса глазури чуть шире экрана — обрезаем по бокам, чтобы не было горизонтальной прокрутки */
+/* Страховка от горизонтальной прокрутки на телефоне */
 main {
   overflow-x: clip;
-}
-
-/* Старые браузеры без overflow: clip — полоса ровно по ширине экрана */
-@supports not (overflow-x: clip) {
-  .drips::before {
-    right: 0;
-    left: 0;
-  }
-}
-
-/* ----- Глазурь, стекающая с блока ----- */
-.drips {
-  position: absolute;
-  top: calc(100% - 1px);
-  right: 0;
-  left: 0;
-  z-index: 3;
-  display: flex;
-  justify-content: space-between;
-  height: 96px;
-  padding: 0 4%;
-  color: var(--hero);
-  filter: url(#goo); /* сливает полосу и капли в одну тягучую форму */
-  pointer-events: none;
-}
-
-/* Полоса, из которой «вытекают» капли */
-.drips::before {
-  content: "";
-  position: absolute;
-  top: -8px;
-  right: -30px;
-  left: -30px;
-  height: 20px;
-  background: currentColor;
-}
-
-.drips i {
-  flex: none;
-  width: var(--w, 24px);
-  height: var(--h, 40px);
-  border-radius: 0 0 999px 999px;
-  background: currentColor;
-  transform-origin: top;
-  animation: drip var(--t, 5s) ease-in-out var(--d, 0s) infinite alternate;
-}
-
-/* Капля медленно вытягивается и подтягивается обратно */
-@keyframes drip {
-  from { transform: scaleY(0.5); }
-  to { transform: scaleY(1.12); }
-}
-
-/* У каждой капли своя длина, толщина и ритм */
-.drips i:nth-child(1) { --h: 34px; --w: 22px; --t: 5.2s; }
-.drips i:nth-child(2) { --h: 62px; --w: 28px; --t: 6.4s; --d: -2s; }
-.drips i:nth-child(3) { --h: 26px; --w: 20px; --t: 4.6s; --d: -1s; }
-.drips i:nth-child(4) { --h: 78px; --w: 30px; --t: 7.2s; --d: -3s; }
-.drips i:nth-child(5) { --h: 40px; --w: 22px; --t: 5.6s; --d: -0.5s; }
-.drips i:nth-child(6) { --h: 54px; --w: 26px; --t: 6s; --d: -4s; }
-.drips i:nth-child(7) { --h: 30px; --w: 20px; --t: 4.8s; --d: -2.5s; }
-.drips i:nth-child(8) { --h: 70px; --w: 28px; --t: 6.8s; --d: -1.5s; }
-.drips i:nth-child(9) { --h: 36px; --w: 22px; --t: 5s; --d: -3.5s; }
-.drips i:nth-child(10) { --h: 58px; --w: 26px; --t: 6.2s; --d: -0.8s; }
-.drips i:nth-child(11) { --h: 28px; --w: 20px; --t: 4.4s; --d: -2.2s; }
-.drips i:nth-child(12) { --h: 84px; --w: 30px; --t: 7.6s; --d: -4.5s; }
-.drips i:nth-child(13) { --h: 44px; --w: 24px; --t: 5.4s; --d: -1.2s; }
-.drips i:nth-child(14) { --h: 32px; --w: 22px; --t: 5.8s; --d: -3.2s; }
-
-/* На телефоне капель вдвое меньше — иначе им тесно */
-@media (max-width: 639px) {
-  .drips i:nth-child(2n) {
-    display: none;
-  }
-}
-
-.drips--choco {
-  color: var(--choco);
-}
-
-/* Блок под глазурью: оставляем место, чтобы капли не касались текста */
-.section--after-drips {
-  padding-top: 112px;
-}
-
-/* ----- Первый экран ----- */
-.hero {
-  position: relative;
-  z-index: 2;
-  background:
-    radial-gradient(55% 60% at 88% 0%, rgba(255, 253, 249, 0.85), transparent 70%),
-    radial-gradient(45% 50% at 0% 0%, rgba(241, 226, 200, 0.75), transparent 70%),
-    var(--hero);
-}
-
-.hero__art {
-  width: 100%;
-}
-
-.hero__art .media {
-  border-radius: 20px;
-  box-shadow: 0 30px 60px -34px rgba(37, 26, 21, 0.65);
 }
 
 /* Кнопка и короткие факты в одну строку под текстом */
@@ -2469,29 +2340,6 @@ main {
   color: var(--choco);
 }
 
-/* ----- Появление: блок проявляется из дымки, будто оттаивает ----- */
-.js .reveal {
-  filter: blur(10px);
-  transition: opacity 0.9s var(--smooth), transform 0.9s var(--smooth), filter 0.9s var(--smooth);
-}
-
-.js .reveal.is-visible {
-  filter: none;
-}
-
-/* Элементы первого экрана выходят по очереди */
-.js .hero__text .reveal:nth-child(2) { transition-delay: 0.12s; }
-.js .hero__text .reveal:nth-child(3) { transition-delay: 0.24s; }
-.js .hero__text .reveal:nth-child(4) { transition-delay: 0.36s; }
-.js .hero__art.reveal { transition-delay: 0.2s; }
-.js .step.reveal:nth-child(2),
-.js .faq__item.reveal:nth-child(2),
-.js .review.reveal:nth-child(2) { transition-delay: 0.1s; }
-.js .step.reveal:nth-child(3),
-.js .faq__item.reveal:nth-child(3),
-.js .review.reveal:nth-child(3) { transition-delay: 0.2s; }
-.js .faq__item.reveal:nth-child(4) { transition-delay: 0.3s; }
-
 /* ----- Карточка при фильтре «оплывает» вниз ----- */
 .card {
   transform-origin: top center;
@@ -2501,42 +2349,13 @@ main {
 
 .card.is-out {
   opacity: 0;
-  filter: blur(8px);
-  transform: translateY(28px) scaleY(0.84);
-}
-
-/* ----- Блик на главных кнопках ----- */
-.btn--primary {
-  position: relative;
-  overflow: hidden;
-}
-
-.btn--primary::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 45%;
-  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.38), transparent);
-  transform: translateX(-140%) skewX(-18deg);
-  pointer-events: none;
-}
-
-@media (hover: hover) {
-  .btn--primary:hover::after {
-    transform: translateX(340%) skewX(-18deg);
-    transition: transform 0.9s var(--smooth);
-  }
 }
 
 /* ----- Шоколадный блок «Как заказать» ----- */
 .section--choco {
   position: relative;
   z-index: 1;
-  background:
-    radial-gradient(50% 70% at 100% 0%, rgba(180, 82, 107, 0.28), transparent 70%),
-    var(--choco);
+  background: var(--plum);
   color: var(--cream);
 }
 
@@ -2564,7 +2383,7 @@ main {
 }
 
 .section--choco .step__text {
-  color: #d9c5b8;
+  color: #d8c8e2;
 }
 
 /* ----- Шапка: кнопка «Мой заказ» ----- */
@@ -2585,7 +2404,7 @@ main {
 }
 
 .order-chip:hover {
-  box-shadow: 0 0 0 5px rgba(207, 122, 142, 0.18);
+  box-shadow: 0 0 0 5px rgba(200, 21, 92, 0.18);
 }
 
 .order-chip:active {
@@ -2682,7 +2501,7 @@ main {
 }
 
 @keyframes melt-in {
-  from { opacity: 0; filter: blur(8px); transform: translateY(-8px); }
+  from { opacity: 0; }
 }
 
 /* ----- Фото-пример в форме заказа ----- */
@@ -3149,7 +2968,7 @@ main {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: rgba(33, 19, 14, 0.62);
+  background: rgba(42, 26, 48, 0.62);
   backdrop-filter: blur(6px);
   animation: fade 0.35s ease;
 }
@@ -3163,16 +2982,14 @@ main {
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
-  background:
-    radial-gradient(70% 30% at 100% 0%, rgba(243, 211, 217, 0.7), transparent 70%),
-    var(--cream);
+  background: var(--cream);
   border-radius: 30px 30px 0 0;
-  box-shadow: 0 -30px 60px -30px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 -1px 0 var(--line);
   animation: track-in 0.6s var(--smooth);
 }
 
 @keyframes track-in {
-  from { transform: translateY(40px); opacity: 0; filter: blur(6px); }
+  from { transform: translateY(40px); opacity: 0; }
 }
 
 .track__close {
@@ -3403,7 +3220,7 @@ main {
 .after textarea:focus {
   outline: none;
   border-color: var(--rose-light);
-  box-shadow: 0 0 0 4px rgba(207, 122, 142, 0.18);
+  box-shadow: 0 0 0 4px rgba(200, 21, 92, 0.18);
 }
 
 .after__thanks {
@@ -3492,37 +3309,9 @@ main {
     padding: 34px 34px 30px;
     border-radius: 30px;
   }
-
-  .hero__art {
-    width: min(100%, 380px);
-  }
 }
 
 @media (min-width: 1000px) {
-  .section--after-drips {
-    padding-top: 170px;
-  }
-
-  .drips {
-    height: 130px;
-  }
-
-  /* На большом экране капли длиннее */
-  .drips i {
-    height: calc(var(--h, 40px) * 1.4);
-  }
-
-  .hero__art {
-    width: min(100%, 470px);
-    margin-right: 0;
-    padding: 22px;
-  }
-
-  .hero__badge {
-    padding: 10px 18px;
-    font-size: 15px;
-  }
-
   .order-chip {
     margin-right: 4px;
   }
@@ -3545,6 +3334,160 @@ main {
     opacity: 1;
     filter: none;
     transform: none;
+  }
+}
+
+/* ===================== Шапка, шаги, карточки (спокойный вид) ===================== */
+
+/* Логотип: картинка или текст в цвете логотипа */
+.logo {
+  color: var(--plum);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.logo img {
+  display: block;
+  height: 40px;
+  width: auto;
+}
+
+/* «Позвонить» и «WhatsApp» справа от логотипа */
+.header__contacts {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.hbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--plum);
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.hbtn svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hbtn--wa {
+  border-color: var(--rose);
+  background: var(--rose);
+  color: #fff;
+}
+
+@media (hover: hover) {
+  .hbtn:hover {
+    border-color: var(--plum);
+  }
+
+  .hbtn--wa:hover {
+    border-color: var(--rose-dark);
+    background: var(--rose-dark);
+  }
+}
+
+/* Узкий телефон: прячем значки, чтобы логотип и обе кнопки влезли в строку */
+@media (max-width: 389px) {
+  .logo {
+    font-size: 24px;
+  }
+
+  .hbtn {
+    padding: 0 10px;
+    font-size: 13px;
+  }
+
+  .hbtn svg {
+    display: none;
+  }
+}
+
+@media (min-width: 1000px) {
+  /* Компьютер: логотип — меню — «Позвонить» и «WhatsApp» — корзина */
+  .nav {
+    order: 1;
+  }
+
+  .header__contacts {
+    order: 2;
+    margin-left: 0;
+  }
+
+  .order-chip {
+    order: 3;
+  }
+
+  .cart-icon {
+    order: 4;
+  }
+
+  .hbtn {
+    padding: 0 16px;
+    font-size: 15px;
+  }
+}
+
+/* Как заказать: номер прямо в заголовке шага — «1. Выберите торт» */
+.step {
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
+.step::after {
+  content: none;
+}
+
+.step__title::before {
+  content: counter(step) ". ";
+  color: var(--rose-light);
+}
+
+.step__text {
+  padding-right: 0;
+}
+
+/* Заголовки секций — в цвете логотипа */
+.section__title {
+  color: var(--plum);
+}
+
+.section--choco .section__title {
+  color: #fff;
+}
+
+/* Карточка: фото до краёв, название в одну строку */
+.card .media {
+  margin: 0;
+  border-radius: 0;
+}
+
+.card__name {
+  overflow: hidden;
+  font-size: 17px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+@media (min-width: 640px) {
+  .card__name {
+    font-size: 20px;
   }
 }
 

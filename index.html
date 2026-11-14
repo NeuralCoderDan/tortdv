@@ -3,35 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>ТортДВ — удобный заказ торта</title>
-  <meta name="description" content="Демо-прототип удобного заказа тортов для кондитерской ТортДВ, Хабаровск.">
+  <title>ТортДВ — торты на заказ в Хабаровске</title>
+  <meta name="description" content="Торты на заказ в Хабаровске: выберите торт и вес, укажите дату и оформите заказ.">
 
-  <!-- Шрифты: заголовки с засечками, текст — гротеск -->
+  <!-- Шрифт: Onest для заголовков и текста -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=2">
+  <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 
-  <!-- Фильтр «тягучести»: сливает полосу глазури и капли в одну плавную форму -->
-  <svg class="svg-defs" width="0" height="0" aria-hidden="true" focusable="false">
-    <defs>
-      <filter id="goo">
-        <feGaussianBlur in="SourceGraphic" stdDeviation="6"/>
-        <feColorMatrix values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9"/>
-      </filter>
-    </defs>
-  </svg>
 
   <!-- Тонкая плашка: это прототип -->
   <div class="demo-bar">Демо-прототип улучшенного заказа</div>
 
-  <!-- Шапка: логотип, короткое меню, корзина (на компьютере) -->
+  <!-- Шапка: логотип, «Позвонить» и «WhatsApp», меню, корзина (на компьютере) -->
   <header class="header" id="top">
     <div class="container header__inner">
-      <a href="#top" class="logo">ТортДВ</a>
+      <!-- Если в data.js указан logo — script.js поставит картинку вместо текста -->
+      <a href="#top" class="logo" id="logo">ТортДВ</a>
+      <!-- Номера подставляет script.js из data.js -->
+      <div class="header__contacts">
+        <a class="hbtn" id="head-call" href="#">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 3.5h3l1.5 4-2 1.3a11 11 0 0 0 6.1 6.1l1.3-2 4 1.5v3a2 2 0 0 1-2.2 2A17 17 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2Z"/></svg>
+          Позвонить
+        </a>
+        <a class="hbtn hbtn--wa" id="head-wa" href="#" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3Z"/><path d="M9 8.5c0 3.5 3 6.5 6.5 6.5l1-1.6-2-1-1 .8c-1-.5-2-1.5-2.4-2.4l.8-1-1-2z"/></svg>
+          WhatsApp
+        </a>
+      </div>
       <nav class="nav" aria-label="Главное меню">
         <a href="#cakes">Торты</a>
         <a href="#how">Как заказать</a>
@@ -53,41 +56,35 @@
   </header>
 
   <main>
-    <!-- Первый экран -->
+    <!-- Первый экран: заголовок, условия и три торта в ряд -->
     <section class="hero">
-      <div class="container hero__grid">
-        <div class="hero__text">
-          <p class="eyebrow reveal">Кондитерская · Хабаровск</p>
-          <h1 class="hero__title reveal">Торт на заказ<br>за <em>пару касаний</em></h1>
-          <p class="hero__lead reveal">Выберите торт и вес, укажите дату и внесите предоплату. Все условия видны сразу, без сюрпризов в конце.</p>
-          <div class="hero__row reveal">
-            <a href="#cakes" class="btn btn--primary btn--lg">Выбрать торт</a>
-            <ul class="hero__facts">
-              <li><b>от 1,5 кг</b>минимальный вес</li>
-              <li><b>7 дней</b>срок заказа</li>
-              <li><b>50%</b>предоплата</li>
-            </ul>
-          </div>
+      <div class="container">
+        <h1 class="hero__title">Торт на заказ в Хабаровске</h1>
+        <p class="hero__lead">Выберите торт и вес — цена сразу видна на карточке.</p>
+        <div class="hero__row">
+          <a href="#cakes" class="btn btn--primary btn--lg">Выбрать торт</a>
+          <ul class="hero__facts">
+            <li><b>от 1,5 кг</b>вес торта</li>
+            <li><b>за 7 дней</b>принимаем заказ</li>
+            <li><b>50%</b>предоплата</li>
+          </ul>
         </div>
-        <!-- Крупное фото первого торта: вставляет script.js -->
-        <div class="hero__art reveal" id="hero-art"></div>
+        <!-- Фото тортов в ряд: вставляет script.js -->
+        <div class="hero__photos" id="hero-photos"></div>
       </div>
-      <!-- Розовая глазурь стекает с первого экрана -->
-      <div class="drips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
     </section>
 
     <!-- Каталог с быстрыми фильтрами -->
-    <section class="section section--after-drips" id="cakes">
+    <section class="section" id="cakes">
       <div class="container">
-        <div class="section__head reveal">
-          <p class="eyebrow">Торты</p>
-          <h2 class="section__title">Выберите свой торт</h2>
+        <div class="section__head">
+          <h2 class="section__title">Торты</h2>
         </div>
         <!-- Плашки по поводу: видны всегда -->
-        <div class="chips reveal" id="filters" role="group" aria-label="Повод"></div>
+        <div class="chips" id="filters" role="group" aria-label="Повод"></div>
 
         <!-- Строка над каталогом: кнопка «Фильтры» (телефон) и «Найдено» -->
-        <div class="toolbar reveal">
+        <div class="toolbar">
           <button class="filter-btn" id="filter-open" type="button" aria-controls="price-panel">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10m4 0h2M4 17h4m4 0h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
             Фильтры<span class="filter-btn__dot" id="filter-dot" hidden></span>
@@ -162,57 +159,44 @@
     <!-- Как заказать: 3 шага -->
     <section class="section section--choco" id="how">
       <div class="container">
-        <div class="section__head reveal">
-          <p class="eyebrow">Как заказать</p>
-          <h2 class="section__title">Три шага — и торт ваш</h2>
+        <div class="section__head">
+          <h2 class="section__title">Как заказать</h2>
         </div>
         <ol class="steps">
-          <li class="step reveal">
-            <span class="step__icon" aria-hidden="true">
-              <svg viewBox="0 0 32 32"><path d="M6 17h20v9H6z"/><path d="M8 17v-5h16v5"/><path d="M16 12V7m-4 5V9m8 3V9"/><path d="M16 5.5c1 0 1-1.5 0-2.5-1 1-1 2.5 0 2.5Z"/></svg>
-            </span>
-            <b class="step__title">Выбрали торт</b>
-            <span class="step__text">И сразу вес — цена видна на карточке.</span>
+          <li class="step">
+            <b class="step__title">Выберите торт</b>
+            <span class="step__text">И вес — цена на карточке пересчитается сама.</span>
           </li>
-          <li class="step reveal">
-            <span class="step__icon" aria-hidden="true">
-              <svg viewBox="0 0 32 32"><rect x="5" y="7" width="22" height="20" rx="3"/><path d="M5 13h22M11 4v6m10-6v6"/><path d="m12 20 3 3 6-6"/></svg>
-            </span>
-            <b class="step__title">Выбрали дату</b>
-            <span class="step__text">Не раньше чем через 7 дней — календарь подскажет.</span>
+          <li class="step">
+            <b class="step__title">Укажите дату</b>
+            <span class="step__text">Не раньше чем через 7 дней. Более ранние даты в календаре закрыты.</span>
           </li>
-          <li class="step reveal">
-            <span class="step__icon" aria-hidden="true">
-              <svg viewBox="0 0 32 32"><rect x="4" y="8" width="24" height="17" rx="3"/><path d="M4 13h24M9 20h5"/></svg>
-            </span>
-            <b class="step__title">Внесли предоплату</b>
-            <span class="step__text">50% по СБП — и мы начинаем готовить.</span>
+          <li class="step">
+            <b class="step__title">Внесите предоплату</b>
+            <span class="step__text">50% по СБП. После неё заказ принят в работу.</span>
           </li>
         </ol>
       </div>
-      <!-- Шоколадная глазурь стекает на следующий блок -->
-      <div class="drips drips--choco" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
     </section>
 
     <!-- Отзывы: только заглушки, без выдуманных текстов -->
-    <section class="section section--after-drips" id="reviews">
+    <section class="section" id="reviews">
       <div class="container">
-        <div class="section__head reveal">
-          <p class="eyebrow">Отзывы</p>
-          <h2 class="section__title">Что говорят гости</h2>
+        <div class="section__head">
+          <h2 class="section__title">Отзывы</h2>
         </div>
         <div class="reviews">
-          <article class="review reveal" aria-label="Место для отзыва">
+          <article class="review" aria-label="Место для отзыва">
             <div class="review__head"><span class="ph ph--avatar"></span><span class="ph ph--name"></span></div>
             <span class="ph ph--line"></span><span class="ph ph--line"></span><span class="ph ph--line ph--short"></span>
             <p class="review__note">Здесь будут ваши настоящие отзывы с 2ГИС и Фламп</p>
           </article>
-          <article class="review reveal" aria-label="Место для отзыва">
+          <article class="review" aria-label="Место для отзыва">
             <div class="review__head"><span class="ph ph--avatar"></span><span class="ph ph--name"></span></div>
             <span class="ph ph--line"></span><span class="ph ph--line"></span><span class="ph ph--line ph--short"></span>
             <p class="review__note">Здесь будут ваши настоящие отзывы с 2ГИС и Фламп</p>
           </article>
-          <article class="review reveal" aria-label="Место для отзыва">
+          <article class="review" aria-label="Место для отзыва">
             <div class="review__head"><span class="ph ph--avatar"></span><span class="ph ph--name"></span></div>
             <span class="ph ph--line"></span><span class="ph ph--line"></span><span class="ph ph--line ph--short"></span>
             <p class="review__note">Здесь будут ваши настоящие отзывы с 2ГИС и Фламп</p>
@@ -224,26 +208,25 @@
     <!-- Частые вопросы: ответы раскрываются по нажатию -->
     <section class="section section--alt" id="faq">
       <div class="container faq">
-        <div class="section__head reveal">
-          <p class="eyebrow">Частые вопросы</p>
-          <h2 class="section__title">Коротко о важном</h2>
+        <div class="section__head">
+          <h2 class="section__title">Частые вопросы</h2>
         </div>
         <div class="faq__list">
-          <details class="faq__item reveal">
+          <details class="faq__item">
             <summary>За сколько дней нужно заказывать?</summary>
-            <p>Минимум за 7 дней до нужной даты. В календаре при оформлении более ранние даты просто недоступны.</p>
+            <p>Минимум за 7 дней до нужной даты. Более ранние даты в календаре выбрать нельзя.</p>
           </details>
-          <details class="faq__item reveal">
+          <details class="faq__item">
             <summary>Как работает предоплата?</summary>
-            <p>При заказе вносится 50% по СБП — после этого мы начинаем готовить торт. Остаток оплачивается при получении.</p>
+            <p>При заказе вносится 50% по СБП, после этого заказ принят. Остаток — при получении.</p>
           </details>
-          <details class="faq__item reveal">
+          <details class="faq__item">
             <summary>Как получить торт?</summary>
             <p>Самовывоз: пер. Фабричный, 25. Или Яндекс.Доставка — она оплачивается отдельно по тарифу сервиса.</p>
           </details>
-          <details class="faq__item reveal">
+          <details class="faq__item">
             <summary>У меня аллергия. Что делать?</summary>
-            <p>Напишите об этом в комментарии к заказу. Кондитер свяжется с вами и подскажет по составу до начала работы.</p>
+            <p>Напишите об этом в комментарии к заказу. Кондитер свяжется с вами и расскажет про состав.</p>
           </details>
         </div>
       </div>
@@ -501,7 +484,7 @@
   </div>
 
   <!-- Сначала данные, потом логика -->
-  <script src="data.js?v=2"></script>
-  <script src="script.js?v=2"></script>
+  <script src="data.js?v=3"></script>
+  <script src="script.js?v=3"></script>
 </body>
 </html>
