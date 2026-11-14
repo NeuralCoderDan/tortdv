@@ -332,7 +332,7 @@ textarea {
 .catalog {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr)); /* телефон: 2 в ряд */
-  gap: 12px;
+  gap: 20px;
 }
 
 .catalog__empty {
@@ -988,18 +988,6 @@ textarea {
   color: var(--choco-soft);
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 4;
-}
-
-/* Условия видны сразу */
-.terms {
-  margin: 0 0 10px;
-  padding: 6px 9px;
-  border-radius: 10px;
-  background: var(--cream);
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.4;
-  color: var(--choco-soft);
 }
 
 /* Плашки веса: на телефоне сеткой 2 × 2 */
@@ -1662,7 +1650,7 @@ textarea {
   /* Планшет: 3 карточки в ряд */
   .catalog {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 18px;
+    gap: 20px;
   }
 
   .card__name {
@@ -1848,7 +1836,7 @@ textarea {
   /* Компьютер: 4 карточки в ряд, вес — в одну строку */
   .catalog {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 24px;
+    gap: 20px;
   }
 
   .card .media {
@@ -2611,85 +2599,6 @@ main {
   }
 }
 
-/* ===================== Калькулятор стоимости ===================== */
-/* Белая карточка с розовой рамкой под подзаголовком первого экрана */
-.calc {
-  display: grid;
-  gap: 14px;
-  max-width: 560px;
-  margin: 0 0 24px;
-  padding: 18px;
-  background: #fff;
-  border: 2px solid #f6bfd6;
-  border-radius: 16px;
-}
-
-.calc__field {
-  display: grid;
-  gap: 6px;
-}
-
-.calc__label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--choco-soft);
-}
-
-.calc .sort-pick select {
-  font-size: 16px; /* 16px — чтобы iPhone не увеличивал страницу при выборе */
-}
-
-/* Чипы веса — в одну строку, как на карточке */
-.calc__weights {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.calc__weights .weight--fixed {
-  grid-column: 1 / -1;
-}
-
-/* Строка результата: «Наполеон · 2 кг = 7 600 ₽» */
-.calc__result {
-  margin: 0;
-  font-family: var(--display);
-  font-size: 22px;
-  font-weight: 800;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-  color: var(--plum);
-}
-
-.calc__result.is-ask {
-  color: var(--rose);
-}
-
-.calc__go {
-  width: 100%;
-}
-
-/* Карточка, к которой перешли из калькулятора, — подсвечена рамкой */
-.card.is-picked {
-  outline: 3px solid var(--rose);
-  outline-offset: 3px;
-}
-
-@media (min-width: 640px) {
-  .calc {
-    padding: 22px;
-  }
-
-  .calc__result {
-    font-size: 26px;
-  }
-
-  .calc__go {
-    width: auto;
-    justify-self: start;
-  }
-}
-
 /* ===================== Заказ: липкая кнопка и окно ===================== */
 
 /* Телефон: внизу всегда «Заказать [торт]» — последний выбранный */
@@ -2782,4 +2691,100 @@ main {
   width: 100%;
   background: linear-gradient(135deg, #e0006a, #9b00c9);
   color: #fff;
+}
+
+/* ===================== Воздух: отступы и простые карточки ===================== */
+
+/* Между секциями — 80 px */
+.section {
+  padding: 80px 0;
+}
+
+/* Карточка: фото — 55% высоты, ниже название, короткое описание, цена и «Заказать».
+   Высота фото подобрана под нижнюю часть карточки: 256 / (256 + 209) ≈ 55% на телефоне,
+   234 / (234 + 191) ≈ 55% на планшете и компьютере */
+.card .media {
+  aspect-ratio: auto;
+  height: 256px;
+}
+
+@media (min-width: 640px) {
+  .card .media {
+    height: 234px;
+  }
+}
+
+.card__body {
+  padding: 16px;
+}
+
+.card__name {
+  margin-bottom: 6px;
+  font-size: 19px;
+}
+
+/* Описание: мелко, серым, не больше двух строк */
+.card__desc {
+  flex: none;
+  display: -webkit-box;
+  margin: 0 0 14px;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #888;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.card__cost {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  margin: 0;
+}
+
+.card__price {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.card__per {
+  font-size: 13px;
+  color: #888;
+}
+
+@media (min-width: 640px) {
+  .card__name {
+    font-size: 22px;
+  }
+}
+
+/* Окно заказа: фото сверху, вес плашками в одну строку */
+.order__photo .media {
+  aspect-ratio: 16 / 10;
+  margin: 0 0 14px;
+  border-radius: 14px;
+}
+
+.order__weights {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 4px 0 12px;
+}
+
+.order__weights .weight--fixed {
+  grid-column: 1 / -1;
+}
+
+.order .modal__title {
+  margin-bottom: 10px;
+}
+
+/* Крестик в окне заказа лежит на фото — белый кружок, чтобы его было видно */
+.order .modal__close {
+  z-index: 1;
+  top: 12px;
+  right: 12px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }

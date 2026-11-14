@@ -154,20 +154,6 @@ function renderFilters() {
 }
 
 function renderCatalog() {
-  const rules = `заказ за ${CONFIG.minDays} дней · предоплата ${CONFIG.prepay * 100}%`;
-
-  // Торт за кг — плашки веса; торт с фиксированной ценой — просто его вес
-  const weightsHTML = (cake) =>
-    cake.fixed
-      ? `<div class="weights weights--fixed"><span class="weight weight--fixed">${cake.fixed.weight}</span></div>`
-      : `<div class="weights" role="radiogroup" aria-label="Вес торта «${cake.name}»">
-          ${CONFIG.weights.map((kg) => `
-            <button class="weight" type="button" role="radio" data-kg="${kg}"
-                    aria-checked="${kg === chosenWeight[cake.id]}">
-              ${kilos(kg)}
-            </button>`).join("")}
-        </div>`;
-
   $("#catalog").innerHTML = CAKES.map((cake) => `
     <article class="card" data-id="${cake.id}">
       <button class="card__zoom" type="button" data-zoom aria-label="Смотреть все фото торта «${cake.name}»">
@@ -179,10 +165,8 @@ function renderCatalog() {
       <div class="card__body">
         <h3 class="card__name" title="${cake.name}"><span>${cake.name}</span></h3>
         <p class="card__desc">${cake.desc}</p>
-        <p class="terms">${cake.fixed ? cake.fixed.weight : "от " + kilos(CONFIG.weights[0])} · ${rules}</p>
-        ${weightsHTML(cake)}
         <div class="card__foot">
-          <span class="card__price"></span>
+          <p class="card__cost"><span class="card__price"></span><span class="card__per"></span></p>
           <button class="btn btn--primary" type="button" data-order>Заказать</button>
         </div>
       </div>
@@ -193,10 +177,10 @@ function renderCatalog() {
 
 function updateCardPrice(id) {
   const card = $(`.card[data-id="${id}"]`);
-  setOdometer($(".card__price", card), cakePrice(findCake(id), chosenWeight[id]));
-  $$(".weight", card).forEach((button) => {
-    button.setAttribute("aria-checked", String(Number(button.dataset.kg) === chosenWeight[id]));
-  });
+  const cake = findCake(id);
+  setOdometer($(".card__price", card), cakePrice(cake, chosenWeight[id]));
+  // Рядом с ценой — за какой вес она посчитана
+  $(".card__per", card).textContent = cake.fixed ? cake.fixed.weight : `за ${kilos(chosenWeight[id])}`;
 }
 
 // «Все торты» нажата, когда не выбран ни один повод
@@ -519,14 +503,6 @@ function closeFilters() {
 
 /* ===================== Заказ: окно с формой → WhatsApp ===================== */
 
-// Торт для липкой кнопки — последний, который выбирали (вес, страница торта, калькулятор)
-let focusCakeId = CAKES[0].id;
-
-function setFocusCake(id) {
-  focusCakeId = id;
-  $("#order-bar-text").textContent = `Заказать ${findCake(id).name}`;
-}
-
 // Что сейчас в окне заказа
 const orderNow = { id: null, opener: null };
 
@@ -534,20 +510,36 @@ function orderWeight(cake) {
   return cake.fixed ? null : chosenWeight[cake.id];
 }
 
+// Цена и предоплата в окне — пересчитываются при смене веса
+function renderOrderPrice() {
+  const cake = findCake(orderNow.id);
+  const total = cakePrice(cake, orderWeight(cake));
+  $("#order-price").textContent = `Итого: ${money(total)}`;
+  $("#order-prepay").textContent = `Предоплата ${Math.round(CONFIG.prepay * 100)}%: ${money(total * CONFIG.prepay)}`;
+  $$("#order-weights .weight[data-kg]").forEach((button) => {
+    button.setAttribute("aria-checked", String(Number(button.dataset.kg) === chosenWeight[cake.id]));
+  });
+  updateOrderLink();
+}
+
 function openOrder(cakeId, opener) {
   const cake = findCake(cakeId);
-  const total = cakePrice(cake, orderWeight(cake));
   orderNow.id = cakeId;
   orderNow.opener = opener;
-  setFocusCake(cakeId);
 
-  // Торт и вес — обычный текст, изменить его в окне нельзя
-  $("#order-cake").textContent = `${cake.name} · ${weightText(cake, orderWeight(cake))}`;
-  $("#order-price").textContent = money(total);
-  $("#order-prepay").textContent = `Предоплата ${Math.round(CONFIG.prepay * 100)}%: ${money(total * CONFIG.prepay)}`;
+  // Фото и название — только для чтения
+  $("#order-photo").innerHTML = mediaHTML(cake, false);
+  $("#order-title").textContent = cake.name;
+
+  // Вес: 1,5 / 2 / 2,5 / 3 кг; у бенто — его фиксированный вес
+  $("#order-weights").innerHTML = cake.fixed
+    ? `<span class="weight weight--fixed">${cake.fixed.weight}</span>`
+    : CONFIG.weights.map((kg) => `
+        <button class="weight" type="button" role="radio" data-kg="${kg}">${kilos(kg)}</button>`).join("");
+  $("#order-weights").setAttribute("role", cake.fixed ? "presentation" : "radiogroup");
+  renderOrderPrice();
   $("#order-error").hidden = true;
   $$("#order-form .is-invalid").forEach((field) => field.classList.toggle("is-invalid", false));
-  updateOrderLink();
 
   $("#order-modal").hidden = false;
   document.body.classList.add("no-scroll");
@@ -618,14 +610,26 @@ function setupOrder() {
     problems[0][0].focus();
   });
 
+  // Вес в окне: тот же вес встаёт на карточку и на страницу торта
+  $("#order-weights").addEventListener("click", (event) => {
+    const button = event.target.closest(".weight[data-kg]");
+    if (!button) return;
+    chosenWeight[orderNow.id] = Number(button.dataset.kg);
+    updateCardPrice(orderNow.id);
+    onCardWeightChange();
+    if (!$("#pd").hidden) renderProductPrice();
+    renderOrderPrice();
+  });
+
   $("#order-close").addEventListener("click", closeOrder);
   $("#order-modal").addEventListener("click", (event) => {
     if (event.target.id === "order-modal") closeOrder();
   });
 
-  // Липкая кнопка на телефоне
-  setFocusCake(focusCakeId);
-  $("#order-bar").addEventListener("click", () => openOrder(focusCakeId, $("#order-bar")));
+  // Липкая кнопка на телефоне: «Заказать торт» — прокрутка к тортам
+  $("#order-bar").addEventListener("click", () => {
+    $("#cakes").scrollIntoView({ behavior: reducedMotion.matches ? "auto" : "smooth" });
+  });
 }
 
 /* ===================== Страница торта ===================== */
@@ -635,7 +639,6 @@ const pd = { id: null, photo: 0, tab: "about", opener: null };
 
 function openProduct(cakeId, opener) {
   const cake = findCake(cakeId);
-  setFocusCake(cakeId);
   pd.id = cakeId;
   pd.photo = 0;
   pd.tab = "about";
@@ -878,78 +881,9 @@ function setupGallery() {
 
 document.documentElement.classList.add("js");
 
-/* ===================== Калькулятор стоимости (первый экран) ===================== */
-
-// Цена — та же функция, что на карточках, поэтому суммы всегда совпадают.
-// Нет ни цены за кг, ни фиксированной цены — вернётся null и покажем «Уточните цену».
-const calc = { id: CAKES[0].id, weight: CONFIG.defaultWeight };
-
-function calcPrice(cake, weight) {
-  if (cake.fixed) return cake.fixed.price;
-  return cake.pricePerKg ? cakePrice(cake, weight) : null;
-}
-
-function renderCalc() {
-  const cake = findCake(calc.id);
-
-  // Вес: у бенто один фиксированный вес, у остальных — 1,5 / 2 / 2,5 / 3 кг
-  $("#calc-weights").innerHTML = cake.fixed
-    ? `<span class="weight weight--fixed">${cake.fixed.weight}</span>`
-    : CONFIG.weights.map((kg) => `
-        <button class="weight" type="button" role="radio" data-kg="${kg}"
-                aria-checked="${kg === calc.weight}">${kilos(kg)}</button>`).join("");
-
-  const price = calcPrice(cake, calc.weight);
-  const result = $("#calc-result");
-  result.textContent = price === null
-    ? `${cake.name} · ${weightText(cake, calc.weight)} — Уточните цену`
-    : `${cake.name} · ${weightText(cake, calc.weight)} = ${money(price)}`;
-  result.classList.toggle("is-ask", price === null);
-}
-
-// «Оформить этот торт»: ставим выбранный вес на карточку и прокручиваем к ней
-async function goToCalcCake() {
-  const cake = findCake(calc.id);
-  if (!matches(cake)) {
-    resetFilters(); // карточку скрывал фильтр — показываем все торты
-    await new Promise((resolve) => setTimeout(resolve, 450));
-  }
-  if (!cake.fixed) {
-    chosenWeight[cake.id] = calc.weight;
-    updateCardPrice(cake.id);
-    onCardWeightChange();
-  }
-  const card = $(`.card[data-id="${cake.id}"]`);
-  card.scrollIntoView({ behavior: reducedMotion.matches ? "auto" : "smooth", block: "center" });
-  card.classList.remove("is-picked");
-  void card.offsetWidth;
-  card.classList.add("is-picked"); // розовая рамка на пару секунд — видно, какой торт
-  setTimeout(() => card.classList.remove("is-picked"), 2200);
-}
-
-function setupCalc() {
-  const select = $("#calc-cake");
-  select.innerHTML = CAKES.map((cake) => `<option value="${cake.id}">${cake.name}</option>`).join("");
-  select.value = calc.id;
-  select.addEventListener("change", () => {
-    calc.id = select.value;
-    setFocusCake(calc.id);
-    renderCalc();
-  });
-  $("#calc-weights").addEventListener("click", (event) => {
-    const button = event.target.closest(".weight[data-kg]");
-    if (!button) return;
-    calc.weight = Number(button.dataset.kg);
-    renderCalc();
-  });
-  $("#calc-go").addEventListener("click", goToCalcCake);
-  renderCalc();
-}
-
 document.addEventListener("DOMContentLoaded", () => {
   renderFilters();
   renderCatalog();
-  setupCalc();
   $("#hero-photos").innerHTML = CAKES.slice(0, 3).map((cake) => `
     <button class="hero__photo" type="button" data-cake="${cake.id}">
       ${mediaHTML(cake, false)}
@@ -992,7 +926,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#filter-reset").addEventListener("click", resetFilters);
   $("#empty-reset").addEventListener("click", resetFilters);
 
-  // Карточки: выбор веса и «Заказать»
+  // Карточки: фото — галерея, «Заказать» — окно заказа, остальное — страница торта
   $("#catalog").addEventListener("click", (event) => {
     const card = event.target.closest(".card");
     if (!card) return;
@@ -1002,15 +936,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const zoomBtn = event.target.closest("[data-zoom]");
     if (zoomBtn) {
       openGallery(id, zoomBtn);
-      return;
-    }
-
-    const weightBtn = event.target.closest(".weight");
-    if (weightBtn) {
-      chosenWeight[id] = Number(weightBtn.dataset.kg);
-      updateCardPrice(id);
-      onCardWeightChange();
-      setFocusCake(id);
       return;
     }
 
