@@ -2,17 +2,15 @@
 // Цены, номер WhatsApp и условия меняются только здесь.
 
 const SETTINGS = {
-  whatsapp: "79249267014",          // тестовый номер для заказов (без «+»)
+  whatsapp: "79625009949",          // номер для всех кнопок WhatsApp (без «+»)
   phone: "+7 962 500-99-49",        // единственный телефон на сайте
   address: "пер. Фабричный, 25",
   minDays: 7,                       // заказ не раньше чем через 7 дней
   prepay: 0.5,                      // предоплата 50%
   weights: [1.5, 2, 2.5, 3],        // варианты веса, кг
   defaultWeight: 2,                 // вес, выбранный на карточке сразу
-  // Форматы фото: сайт пробует их по очереди (cake1.jpg, cake1.jpeg, ...)
-  photoFormats: ["jpg", "jpeg", "png", "webp"],
-  // Галерея торта: главное фото + 5 ракурсов.
-  // Файлы: images/cake1.jpg (общий вид), images/cake1-1.jpg … images/cake1-5.jpg
+  // Галерея торта: главное фото + 5 ракурсов (подписи по порядку).
+  // Пути к ракурсам указываются у торта в angles; пока их нет — показываем заглушку без запроса.
   galleryLabels: [
     "Общий вид",
     "С другого ракурса",
@@ -74,7 +72,9 @@ const SORTS = [
   { id: "expensive", label: "Сначала дорогие" }
 ];
 
-// Торты. photo — путь без расширения: формат подберётся сам из photoFormats.
+// Торты. photo — точный путь к главному фото (с расширением).
+// angles — пути к остальным ракурсам по порядку galleryLabels, например
+//          ["images/cake1-1.webp", "images/cake1-2.webp"]. Пустой список — только заглушки.
 // Цена: pricePerKg — за килограмм (вес выбирают на карточке),
 //       fixed — фиксированная цена за торт (например, бенто).
 // about — страница торта: facts (короткие строки) и текст описания по фото.
@@ -83,7 +83,8 @@ const CAKES = [
     id: "cake1",
     name: "Наполеон",
     desc: "Слоёные коржи, заварной крем и хрустящая крошка.",
-    photo: "images/cake1",
+    photo: "images/cake1.webp",
+    angles: [],
     pricePerKg: 3800,
     tags: ["birthday", "jubilee"],
     tint: "#f1e2c8", // цвет заглушки, пока нет фото
@@ -106,7 +107,8 @@ const CAKES = [
     id: "cake2",
     name: "Бенто Happy Birthday",
     desc: "Мини-торт в пастельных тонах с надписью и жемчугом.",
-    photo: "images/cake2",
+    photo: "images/cake2.webp",
+    angles: [],
     fixed: { price: 3500, weight: "750–800 г" },
     tags: ["birthday", "kids"],
     tint: "#e6e3f3",
@@ -129,7 +131,8 @@ const CAKES = [
     id: "cake3",
     name: "Белый муссовый с клубникой",
     desc: "Нежный сливочный мусс, свежая клубника и шоколадные подтёки.",
-    photo: "images/cake3",
+    photo: "images/cake3.webp",
+    angles: [],
     pricePerKg: 4200,
     tags: ["birthday", "jubilee"],
     tint: "#f6dfe2",

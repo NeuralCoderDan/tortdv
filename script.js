@@ -37,25 +37,20 @@ const PH_ICON =
   '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 26h32v14H8z"/><path d="M11 26v-7h26v7"/>' +
   '<path d="M8 32c4 3 8 3 12 0s8-3 12 0 6 2 8 0"/><path d="M24 19v-6"/><path d="M24 10c1.5 0 1.5-2 0-3.5-1.5 1.5-1.5 3.5 0 3.5Z"/></svg>';
 
-// Фото ищем по очереди в форматах из data.js: cake1.jpg → cake1.jpeg → cake1.png → cake1.webp.
-// Если не нашлось ни одного — показываем заглушку с подсказкой, куда положить фото.
-function nextPhotoFormat(img) {
-  const next = Number(img.dataset.format) + 1;
-  if (next < SETTINGS.photoFormats.length) {
-    img.dataset.format = next;
-    img.src = `${img.dataset.base}.${SETTINGS.photoFormats[next]}`;
-  } else {
-    img.parentNode.classList.add("no-photo");
+// Любое фото: src — точный путь из data.js. Нет пути — заглушка без запроса к серверу.
+// Если файл всё же не загрузился — тоже показываем заглушку.
+function photoHTML(src, alt, tint, lazy = true) {
+  if (!src) {
+    return `
+    <div class="media no-photo" style="--tint:${tint}">
+      <div class="media__ph">${PH_ICON}<small>Фото скоро будет</small></div>
+    </div>`;
   }
-}
-
-// Любое фото: base — путь без расширения
-function photoHTML(base, alt, tint, lazy = true) {
   return `
     <div class="media" style="--tint:${tint}">
-      <img src="${base}.${SETTINGS.photoFormats[0]}" alt="${alt}" ${lazy ? 'loading="lazy"' : ""}
-           data-base="${base}" data-format="0" onerror="nextPhotoFormat(this)">
-      <div class="media__ph">${PH_ICON}<small>${base}.jpg</small></div>
+      <img src="${src}" alt="${alt}" ${lazy ? 'loading="lazy"' : ""}
+           onerror="this.parentNode.classList.add('no-photo')">
+      <div class="media__ph">${PH_ICON}<small>${src}</small></div>
     </div>`;
 }
 
@@ -64,11 +59,11 @@ function mediaHTML(cake, lazy = true) {
   return photoHTML(cake.photo, `Торт «${cake.name}»`, cake.tint, lazy);
 }
 
-// Все фото торта для галереи: cake1, cake1-1 … cake1-5
+// Все фото торта для галереи: главное + ракурсы из angles (по порядку galleryLabels)
 function galleryOf(cake) {
   return SETTINGS.galleryLabels.map((label, i) => ({
     label,
-    base: i === 0 ? cake.photo : `${cake.photo}-${i}`
+    base: i === 0 ? cake.photo : (cake.angles || [])[i - 1] || null
   }));
 }
 
@@ -110,19 +105,20 @@ const chosenWeight = Object.fromEntries(CAKES.map((cake) => [cake.id, SETTINGS.d
 const activeTags = new Set();
 let activeSort = "default";
 
-// Цена для фильтра — за вес, выбранный в заголовке фильтра (цена за кг × вес)
-let filterWeight = SETTINGS.weights[0];
+// Вес в заголовке фильтра. Его выбор ставит этот вес на все карточки
+let filterWeight = SETTINGS.defaultWeight;
 // Цена торта: фиксированная (бенто) или цена за кг × вес
 const cakePrice = (cake, weight) => (cake.fixed ? cake.fixed.price : cake.pricePerKg * weight);
 // Вес для текста: «750–800 г» или «2 кг»
 const weightText = (cake, weight) => (cake.fixed ? cake.fixed.weight : kilos(weight));
-const basePrice = (cake) => cakePrice(cake, filterWeight);
+// Цена для фильтра — ровно та, что сейчас на карточке (при выбранном на ней весе)
+const basePrice = (cake) => cakePrice(cake, chosenWeight[cake.id]);
 const PRICE_STEP = 50;
 let PRICE_MIN = 0;
 let PRICE_MAX = 0;
 const price = { from: 0, to: 0 };
 
-// Границы ползунка — от самого дешёвого до самого дорогого торта при выбранном весе
+// Границы ползунка — от самого дешёвого до самого дорогого торта при весах на карточках
 function computePriceBounds() {
   PRICE_MIN = Math.floor(Math.min(...CAKES.map(basePrice)) / PRICE_STEP) * PRICE_STEP;
   PRICE_MAX = Math.ceil(Math.max(...CAKES.map(basePrice)) / PRICE_STEP) * PRICE_STEP;
@@ -337,17 +333,27 @@ function setPrice(from, to) {
   applyFilters();
 }
 
+// Сменили вес на одной карточке: границы ползунка пересчитываем.
+// Если диапазон не трогали — он остаётся «весь», иначе фильтр сработает по новой цене
+function onCardWeightChange() {
+  const wasFull = price.from === PRICE_MIN && price.to === PRICE_MAX;
+  computePriceBounds();
+  if (wasFull) setPrice(PRICE_MIN, PRICE_MAX);
+  else setPrice(price.from, price.to);
+}
+
 // Сменили вес в фильтре: пересчитываем границы цены, диапазон снова «весь»,
 // а на карточках выбираем тот же вес — чтобы цены совпадали с фильтром
 function setFilterWeight(kg, syncCards = true) {
   filterWeight = kg;
-  computePriceBounds();
+  $("#filter-guests").textContent = guestsText(kg);
   if (syncCards) {
     CAKES.forEach((cake) => {
       chosenWeight[cake.id] = kg;
       updateCardPrice(cake.id);
     });
   }
+  computePriceBounds();
   setPrice(PRICE_MIN, PRICE_MAX);
 }
 
@@ -356,7 +362,7 @@ function resetFilters() {
   activeSort = "default";
   $("#filter-sort").value = "default";
   syncTagUI();
-  setFilterWeight(SETTINGS.weights[0], false);
+  setFilterWeight(SETTINGS.defaultWeight);
 }
 
 function setupPriceFilter() {
@@ -367,11 +373,8 @@ function setupPriceFilter() {
     .join("");
   weightSelect.addEventListener("change", () => setFilterWeight(Number(weightSelect.value)));
 
-  // Подсказка под выбором веса: на сколько гостей хватит торта
-  const guests = $("#filter-guests");
-  const showGuests = () => (guests.textContent = guestsText(filterWeight));
-  showGuests();
-  weightSelect.addEventListener("change", showGuests);
+  // Подсказка под выбором веса: на сколько гостей хватит торта (дальше обновляет setFilterWeight)
+  $("#filter-guests").textContent = guestsText(filterWeight);
 
   // Поводы внутри панели фильтров
   $("#filter-tags").addEventListener("click", (event) => {
@@ -658,7 +661,7 @@ function renderSheet() {
       const cake = findCake(line.id);
       return `
         <li class="line" data-index="${i}">
-          ${mediaHTML(cake)}
+          ${mediaHTML(cake, false)}
           <div>
             <b class="line__name">${cake.name}</b>
             <span class="line__meta">${cake.fixed
@@ -920,6 +923,7 @@ function setupProduct() {
     chosenWeight[pd.id] = Number(button.dataset.kg);
     renderProductPrice();
     updateCardPrice(pd.id);
+    onCardWeightChange();
   });
 
   $("#pd-tabs").addEventListener("click", (event) => {
@@ -1429,6 +1433,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (weightBtn) {
       chosenWeight[id] = Number(weightBtn.dataset.kg);
       updateCardPrice(id);
+      onCardWeightChange();
       return;
     }
 
