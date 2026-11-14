@@ -627,9 +627,19 @@ function setupOrder() {
   });
 
   // Липкая кнопка на телефоне: «Заказать торт» — прокрутка к тортам
-  $("#order-bar").addEventListener("click", () => {
+  const bar = $("#order-bar");
+  bar.addEventListener("click", () => {
     $("#cakes").scrollIntoView({ behavior: reducedMotion.matches ? "auto" : "smooth" });
   });
+
+  // Пока торты на экране, липкая кнопка прячется: иначе она закрывает
+  // кнопку «Заказать» на карточке внизу экрана и нажатие уходит не туда
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(([entry]) => {
+      bar.classList.toggle("is-hidden", entry.isIntersecting);
+      bar.tabIndex = entry.isIntersecting ? -1 : 0;
+    }).observe($("#cakes"));
+  }
 }
 
 /* ===================== Страница торта ===================== */

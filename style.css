@@ -2622,7 +2622,7 @@ main {
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
-  transition: transform 0.2s;
+  transition: transform 0.3s var(--smooth);
 }
 
 .order-bar span {
@@ -2633,6 +2633,12 @@ main {
 
 .order-bar:active {
   transform: scale(0.98);
+}
+
+/* Торты на экране — кнопка уезжает вниз и не перехватывает нажатия */
+.order-bar.is-hidden {
+  transform: translateY(calc(100% + 20px));
+  pointer-events: none;
 }
 
 /* Окно заказа: поверх страницы торта, форма слева */
