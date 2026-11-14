@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=5">
+  <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 
@@ -59,6 +59,20 @@
       <div class="container">
         <h1 class="hero__title">Торт на заказ в Хабаровске</h1>
         <p class="hero__lead">Выберите торт и вес — цена сразу видна на карточке.</p>
+
+        <!-- Калькулятор стоимости: торты и веса подставляет script.js из data.js -->
+        <div class="calc" id="calc">
+          <label class="calc__field">
+            <span class="calc__label">Выберите торт</span>
+            <span class="sort-pick">
+              <select id="calc-cake"></select>
+              <svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg>
+            </span>
+          </label>
+          <div class="weights calc__weights" id="calc-weights" role="radiogroup" aria-label="Вес торта"></div>
+          <p class="calc__result" id="calc-result" aria-live="polite"></p>
+          <button class="btn btn--primary btn--lg calc__go" id="calc-go" type="button">Оформить этот торт</button>
+        </div>
         <div class="hero__row">
           <a href="#cakes" class="btn btn--primary btn--lg">Выбрать торт</a>
           <ul class="hero__facts">
@@ -455,7 +469,7 @@
   </div>
 
   <!-- Сначала данные, потом логика -->
-  <script src="data.js?v=5"></script>
-  <script src="script.js?v=5"></script>
+  <script src="data.js?v=6"></script>
+  <script src="script.js?v=6"></script>
 </body>
 </html>

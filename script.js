@@ -1357,9 +1357,77 @@ function setupGallery() {
 
 document.documentElement.classList.add("js");
 
+/* ===================== Калькулятор стоимости (первый экран) ===================== */
+
+// Цена — та же функция, что на карточках, поэтому суммы всегда совпадают.
+// Нет ни цены за кг, ни фиксированной цены — вернётся null и покажем «Уточните цену».
+const calc = { id: CAKES[0].id, weight: CONFIG.defaultWeight };
+
+function calcPrice(cake, weight) {
+  if (cake.fixed) return cake.fixed.price;
+  return cake.pricePerKg ? cakePrice(cake, weight) : null;
+}
+
+function renderCalc() {
+  const cake = findCake(calc.id);
+
+  // Вес: у бенто один фиксированный вес, у остальных — 1,5 / 2 / 2,5 / 3 кг
+  $("#calc-weights").innerHTML = cake.fixed
+    ? `<span class="weight weight--fixed">${cake.fixed.weight}</span>`
+    : CONFIG.weights.map((kg) => `
+        <button class="weight" type="button" role="radio" data-kg="${kg}"
+                aria-checked="${kg === calc.weight}">${kilos(kg)}</button>`).join("");
+
+  const price = calcPrice(cake, calc.weight);
+  const result = $("#calc-result");
+  result.textContent = price === null
+    ? `${cake.name} · ${weightText(cake, calc.weight)} — Уточните цену`
+    : `${cake.name} · ${weightText(cake, calc.weight)} = ${money(price)}`;
+  result.classList.toggle("is-ask", price === null);
+}
+
+// «Оформить этот торт»: ставим выбранный вес на карточку и прокручиваем к ней
+async function goToCalcCake() {
+  const cake = findCake(calc.id);
+  if (!matches(cake)) {
+    resetFilters(); // карточку скрывал фильтр — показываем все торты
+    await new Promise((resolve) => setTimeout(resolve, 450));
+  }
+  if (!cake.fixed) {
+    chosenWeight[cake.id] = calc.weight;
+    updateCardPrice(cake.id);
+    onCardWeightChange();
+  }
+  const card = $(`.card[data-id="${cake.id}"]`);
+  card.scrollIntoView({ behavior: reducedMotion.matches ? "auto" : "smooth", block: "center" });
+  card.classList.remove("is-picked");
+  void card.offsetWidth;
+  card.classList.add("is-picked"); // розовая рамка на пару секунд — видно, какой торт
+  setTimeout(() => card.classList.remove("is-picked"), 2200);
+}
+
+function setupCalc() {
+  const select = $("#calc-cake");
+  select.innerHTML = CAKES.map((cake) => `<option value="${cake.id}">${cake.name}</option>`).join("");
+  select.value = calc.id;
+  select.addEventListener("change", () => {
+    calc.id = select.value;
+    renderCalc();
+  });
+  $("#calc-weights").addEventListener("click", (event) => {
+    const button = event.target.closest(".weight[data-kg]");
+    if (!button) return;
+    calc.weight = Number(button.dataset.kg);
+    renderCalc();
+  });
+  $("#calc-go").addEventListener("click", goToCalcCake);
+  renderCalc();
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   renderFilters();
   renderCatalog();
+  setupCalc();
   $("#hero-photos").innerHTML = CAKES.slice(0, 3).map((cake) => `
     <button class="hero__photo" type="button" data-cake="${cake.id}">
       ${mediaHTML(cake, false)}

@@ -3550,3 +3550,82 @@ main {
     padding: 24px;
   }
 }
+
+/* ===================== Калькулятор стоимости ===================== */
+/* Белая карточка с розовой рамкой под подзаголовком первого экрана */
+.calc {
+  display: grid;
+  gap: 14px;
+  max-width: 560px;
+  margin: 0 0 24px;
+  padding: 18px;
+  background: #fff;
+  border: 2px solid #f6bfd6;
+  border-radius: 16px;
+}
+
+.calc__field {
+  display: grid;
+  gap: 6px;
+}
+
+.calc__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--choco-soft);
+}
+
+.calc .sort-pick select {
+  font-size: 16px; /* 16px — чтобы iPhone не увеличивал страницу при выборе */
+}
+
+/* Чипы веса — в одну строку, как на карточке */
+.calc__weights {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.calc__weights .weight--fixed {
+  grid-column: 1 / -1;
+}
+
+/* Строка результата: «Наполеон · 2 кг = 7 600 ₽» */
+.calc__result {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--plum);
+}
+
+.calc__result.is-ask {
+  color: var(--rose);
+}
+
+.calc__go {
+  width: 100%;
+}
+
+/* Карточка, к которой перешли из калькулятора, — подсвечена рамкой */
+.card.is-picked {
+  outline: 3px solid var(--rose);
+  outline-offset: 3px;
+}
+
+@media (min-width: 640px) {
+  .calc {
+    padding: 22px;
+  }
+
+  .calc__result {
+    font-size: 26px;
+  }
+
+  .calc__go {
+    width: auto;
+    justify-self: start;
+  }
+}
