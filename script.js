@@ -167,10 +167,18 @@ function renderCatalog() {
         <p class="card__desc">${cake.desc}</p>
         <div class="card__foot">
           <p class="card__cost"><span class="card__price"></span><span class="card__per"></span></p>
-          <button class="btn btn--primary" type="button" data-order>Заказать</button>
+          <button class="btn btn--primary" type="button" data-order="${cake.id}">Заказать</button>
         </div>
       </div>
     </article>`).join("");
+
+  // «Заказать»: свой обработчик на каждой кнопке. Какой торт — берём из data-order
+  $$("#catalog [data-order]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation(); // нажатие на кнопку не открывает страницу торта
+      openOrder(button.dataset.order, button);
+    });
+  });
 
   CAKES.forEach((cake) => updateCardPrice(cake.id));
 }
@@ -936,7 +944,8 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#filter-reset").addEventListener("click", resetFilters);
   $("#empty-reset").addEventListener("click", resetFilters);
 
-  // Карточки: фото — галерея, «Заказать» — окно заказа, остальное — страница торта
+  // Карточки: фото — галерея, остальное — страница торта.
+  // У кнопок «Заказать» свой обработчик — он навешивается в renderCatalog
   $("#catalog").addEventListener("click", (event) => {
     const card = event.target.closest(".card");
     if (!card) return;
@@ -949,13 +958,8 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const orderBtn = event.target.closest("[data-order]");
     // Нажали на карточку мимо кнопок — открываем страницу торта
-    if (!orderBtn) {
-      openProduct(id, card);
-      return;
-    }
-    openOrder(id, orderBtn);
+    if (!event.target.closest("[data-order]")) openProduct(id, card);
   });
 
   // Escape закрывает сначала галерею, потом окно заказа, страницу торта, фильтры
