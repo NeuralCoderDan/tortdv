@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
 
@@ -39,17 +39,6 @@
         <a href="#reviews">Отзывы</a>
         <a href="#contacts">Контакты</a>
       </nav>
-      <!-- «Мой заказ»: появляется после оформления, открывает отслеживание -->
-      <button class="order-chip" id="order-chip" type="button" hidden>
-        <span class="order-chip__dot" aria-hidden="true"></span>Мой заказ
-      </button>
-      <button class="cart-icon" id="cart-icon" type="button" aria-label="Корзина пуста">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M3.5 9.5h17l-1.6 9a2 2 0 0 1-2 1.6H7.1a2 2 0 0 1-2-1.6l-1.6-9Z"/>
-          <path d="m8 9.5 3-6m5 6-3-6"/>
-        </svg>
-        <span class="badge" id="cart-badge">0</span>
-      </button>
     </div>
   </header>
 
@@ -236,162 +225,36 @@
     </div>
   </footer>
 
-  <!-- Липкая полоса корзины (на телефоне) -->
-  <button class="cart-bar" id="cart-bar" type="button" hidden>
-    <span class="cart-bar__icon" id="cart-bar-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24"><path d="M3.5 9.5h17l-1.6 9a2 2 0 0 1-2 1.6H7.1a2 2 0 0 1-2-1.6l-1.6-9Z"/><path d="m8 9.5 3-6m5 6-3-6"/></svg>
-    </span>
-    <span class="cart-bar__text" id="cart-bar-text">1 торт · 0 ₽</span>
-    <span class="cart-bar__cta">Оформить →</span>
+  <!-- Липкая кнопка на телефоне: «Заказать» последний выбранный торт -->
+  <button class="order-bar" id="order-bar" type="button">
+    <span id="order-bar-text">Заказать торт</span>
   </button>
 
-  <div class="overlay" id="overlay"></div>
   <div class="overlay overlay--filters" id="filter-overlay"></div>
 
-  <!-- Панель оформления: выезжает снизу -->
-  <section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
-    <div class="sheet__grip" aria-hidden="true"></div>
-    <div class="sheet__head">
-      <h2 class="sheet__title" id="sheet-title">Оформление заказа</h2>
-      <button class="icon-btn" id="sheet-close" type="button" aria-label="Закрыть">×</button>
-    </div>
+  <!-- Окно заказа: торт, вес и цена подставлены, клиент пишет имя и дату → WhatsApp -->
+  <div class="modal order" id="order-modal" role="dialog" aria-modal="true" aria-labelledby="order-title" hidden>
+    <div class="modal__card order__card">
+      <button class="icon-btn modal__close" id="order-close" type="button" aria-label="Закрыть">×</button>
+      <h2 class="modal__title" id="order-title">Заказ торта</h2>
+      <!-- Торт и вес — только для чтения, подставляет script.js -->
+      <p class="order__cake" id="order-cake"></p>
+      <p class="order__price" id="order-price"></p>
+      <p class="order__prepay" id="order-prepay"></p>
 
-    <div class="sheet__body">
-      <ul class="lines" id="lines"></ul>
-
-      <form class="form" id="order-form" novalidate>
+      <form class="form order__form" id="order-form" novalidate>
         <label class="field">
-          <span class="field__label">Дата</span>
-          <input type="date" id="f-date" required>
-          <span class="field__hint">Принимаем заказы минимум за 7 дней</span>
+          <span class="field__label">Ваше имя</span>
+          <input type="text" id="o-name" autocomplete="name" maxlength="60" required>
         </label>
-
-        <div class="field">
-          <span class="field__label">Как получить</span>
-          <div class="segmented">
-            <label><input type="radio" name="delivery" value="pickup" checked><span>Самовывоз</span></label>
-            <label><input type="radio" name="delivery" value="yandex"><span>Яндекс.Доставка</span></label>
-          </div>
-          <span class="field__hint" id="delivery-hint">пер. Фабричный, 25</span>
-        </div>
-
-        <label class="field" id="address-field" hidden>
-          <span class="field__label">Адрес доставки</span>
-          <input type="text" id="f-address" autocomplete="street-address" placeholder="Улица, дом, квартира">
-        </label>
-
-        <div class="form__row">
-          <label class="field">
-            <span class="field__label">Имя</span>
-            <input type="text" id="f-name" autocomplete="given-name" required>
-          </label>
-          <label class="field">
-            <span class="field__label">Телефон</span>
-            <input type="tel" id="f-phone" autocomplete="tel" inputmode="tel" placeholder="+7" required>
-          </label>
-        </div>
-
         <label class="field">
-          <span class="field__label">Надпись на торте <i>(необязательно)</i></span>
-          <textarea id="f-text" rows="2" maxlength="120" placeholder="Например: «С днём рождения, Аня!»"></textarea>
+          <span class="field__label">Дата торта</span>
+          <input type="date" id="o-date" required>
+          <span class="field__hint" id="o-date-hint"></span>
         </label>
-
-        <label class="field">
-          <span class="field__label">Комментарий <i>(необязательно)</i></span>
-          <textarea id="f-comment" rows="2" maxlength="300" placeholder="Пожелания по декору, аллергии, удобное время"></textarea>
-        </label>
-
-        <!-- Фото-пример: остаётся на устройстве, в чат его прикрепляет сам клиент -->
-        <div class="field">
-          <span class="field__label">Фото-пример <i>(необязательно)</i></span>
-          <label class="ref" id="ref-pick">
-            <input type="file" id="f-ref" accept="image/*">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10.5" r="1.8"/><path d="m4 17 5-4.5 3.5 3 3-2.5 4.5 4"/></svg>
-            <span>Добавить фото торта, который нравится</span>
-          </label>
-          <div class="ref-preview" id="ref-preview" hidden>
-            <img id="ref-img" alt="Фото-пример">
-            <span id="ref-name"></span>
-            <button type="button" id="ref-remove">Убрать</button>
-          </div>
-          <span class="field__hint">Фото не уходит с сайта само: после отправки заказа прикрепите его в чат WhatsApp</span>
-        </div>
+        <p class="form-error" id="order-error" role="alert" hidden></p>
+        <a class="btn btn--primary btn--lg order__send" id="order-send" href="#" target="_blank" rel="noopener">Отправить заказ в WhatsApp</a>
       </form>
-    </div>
-
-    <div class="sheet__foot">
-      <div class="sum">
-        <div><span>Итого</span><b id="sum-total">0 ₽</b></div>
-        <div class="sum__prepay"><span>Предоплата 50%</span><b id="sum-prepay">0 ₽</b></div>
-      </div>
-      <p class="form-error" id="form-error" role="alert" hidden></p>
-      <div class="sheet__actions">
-        <button class="btn btn--primary btn--lg" id="pay-btn" type="button">Внести предоплату по СБП</button>
-        <a class="btn btn--ghost" id="wa-btn" href="#" target="_blank" rel="noopener">Отправить заказ в WhatsApp</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- Окно оплаты: демо-заглушка СБП -->
-  <div class="modal" id="pay-modal" role="dialog" aria-modal="true" aria-labelledby="pay-title" hidden>
-    <div class="modal__card">
-      <button class="icon-btn modal__close" id="pay-close" type="button" aria-label="Закрыть">×</button>
-      <h2 class="modal__title" id="pay-title">Предоплата по СБП</h2>
-      <p class="modal__sum" id="pay-sum">0 ₽</p>
-      <div class="qr" id="qr" aria-hidden="true"></div>
-      <p class="modal__note">Демо: здесь будет оплата через СБП или ЮKassa</p>
-      <button class="btn btn--primary modal__done" id="pay-done" type="button">Готово, я оплатил</button>
-      <p class="modal__hint">В демо деньги не списываются — кнопка показывает, что будет после оплаты</p>
-    </div>
-  </div>
-
-  <!-- Экран «Заказ принят»: статусы заказа, а после получения — отзыв и вопрос -->
-  <div class="track" id="track" role="dialog" aria-modal="true" aria-labelledby="track-title" hidden>
-    <div class="track__card">
-      <div class="sprinkles" id="sprinkles" aria-hidden="true"></div>
-      <button class="icon-btn track__close" id="track-close" type="button" aria-label="Закрыть">×</button>
-
-      <p class="eyebrow" id="track-number"></p>
-      <h2 class="track__title" id="track-title"></h2>
-      <p class="track__lead" id="track-lead"></p>
-
-      <!-- Статусы рисует script.js -->
-      <ol class="track__steps" id="track-steps"></ol>
-
-      <div class="track__summary" id="track-summary"></div>
-      <p class="track__ref" id="track-ref" hidden>Не забудьте прикрепить фото-пример в чат WhatsApp</p>
-
-      <!-- Появляется, когда торт получен -->
-      <div class="after" id="after" hidden>
-        <div class="after__block">
-          <h3 class="after__title">Как вам торт?</h3>
-          <p class="after__text">Оставьте, пожалуйста, отзыв — это необязательно, но очень помогает.</p>
-          <div class="stars" id="stars" role="radiogroup" aria-label="Оценка торта">
-            <button type="button" role="radio" aria-checked="false" data-star="1" aria-label="1 из 5">★</button>
-            <button type="button" role="radio" aria-checked="false" data-star="2" aria-label="2 из 5">★</button>
-            <button type="button" role="radio" aria-checked="false" data-star="3" aria-label="3 из 5">★</button>
-            <button type="button" role="radio" aria-checked="false" data-star="4" aria-label="4 из 5">★</button>
-            <button type="button" role="radio" aria-checked="false" data-star="5" aria-label="5 из 5">★</button>
-          </div>
-          <textarea id="review-text" rows="2" maxlength="500" placeholder="Пара слов о торте" aria-label="Текст отзыва"></textarea>
-          <button class="btn btn--primary" id="review-send" type="button">Оставить отзыв</button>
-          <p class="after__thanks" id="review-thanks" role="status" hidden></p>
-        </div>
-
-        <div class="after__block">
-          <h3 class="after__title">Вопрос по торту</h3>
-          <p class="after__text">Как хранить, что в составе, можно ли детям — спросите, ответим в WhatsApp.</p>
-          <textarea id="question-text" rows="2" maxlength="500" placeholder="Ваш вопрос" aria-label="Вопрос по торту"></textarea>
-          <a class="btn btn--ghost" id="question-send" href="#" target="_blank" rel="noopener">Задать вопрос в WhatsApp</a>
-          <p class="after__thanks" id="question-error" role="alert" hidden>Сначала напишите вопрос.</p>
-        </div>
-      </div>
-
-      <!-- Только для демо: статусы на рабочем сайте меняет владелец -->
-      <div class="track__demo">
-        <button class="btn btn--ghost" id="track-next" type="button">Демо: следующий статус →</button>
-        <p>На рабочем сайте статус меняет кондитерская — клиент просто видит, где его торт.</p>
-      </div>
     </div>
   </div>
 
@@ -426,8 +289,7 @@
           </div>
 
           <div class="pd__actions">
-            <button class="btn btn--primary btn--lg" id="pd-add" type="button">В корзину</button>
-            <button class="btn btn--ghost btn--lg" id="pd-quick" type="button">Купить в 1 клик</button>
+            <button class="btn btn--primary btn--lg" id="pd-add" type="button">Заказать</button>
           </div>
 
           <ul class="pd__notes">
@@ -469,7 +331,7 @@
   </div>
 
   <!-- Сначала данные, потом логика -->
-  <script src="data.js?v=6"></script>
-  <script src="script.js?v=6"></script>
+  <script src="data.js?v=7"></script>
+  <script src="script.js?v=7"></script>
 </body>
 </html>

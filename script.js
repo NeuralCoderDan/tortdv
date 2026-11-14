@@ -1,4 +1,4 @@
-// Логика прототипа: каталог, фильтры, выбор веса, полёт в корзину, оформление и оплата.
+// Логика сайта: каталог, фильтры, выбор веса, калькулятор и заказ через WhatsApp.
 
 /* ===================== Вспомогательное ===================== */
 
@@ -183,7 +183,7 @@ function renderCatalog() {
         ${weightsHTML(cake)}
         <div class="card__foot">
           <span class="card__price"></span>
-          <button class="btn btn--primary" type="button" data-add>В корзину</button>
+          <button class="btn btn--primary" type="button" data-order>Заказать</button>
         </div>
       </div>
     </article>`).join("");
@@ -517,284 +517,115 @@ function closeFilters() {
   $("#filter-open").focus({ preventScroll: true });
 }
 
-/* ===================== Корзина: данные ===================== */
+/* ===================== Заказ: окно с формой → WhatsApp ===================== */
 
-const STORAGE_KEY = "tortdv-order";
+// Торт для липкой кнопки — последний, который выбирали (вес, страница торта, калькулятор)
+let focusCakeId = CAKES[0].id;
 
-// Строка корзины: { id, weight, qty }
-let cart = loadCart();
-
-function loadCart() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    // Старые или чужие строки (торт убрали, вес не тот) отбрасываем
-    return saved.filter((line) => {
-      const cake = findCake(line.id);
-      if (!cake || !(line.qty > 0)) return false;
-      return cake.fixed ? line.weight === null : CONFIG.weights.includes(line.weight);
-    });
-  } catch (e) {
-    return [];
-  }
+function setFocusCake(id) {
+  focusCakeId = id;
+  $("#order-bar-text").textContent = `Заказать ${findCake(id).name}`;
 }
 
-function saveCart() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
-  } catch (e) {
-    /* без сохранения прототип всё равно работает */
-  }
+// Что сейчас в окне заказа
+const orderNow = { id: null, opener: null };
+
+function orderWeight(cake) {
+  return cake.fixed ? null : chosenWeight[cake.id];
 }
 
-const lineSum = (line) => cakePrice(findCake(line.id), line.weight) * line.qty;
-const cartTotal = () => cart.reduce((sum, line) => sum + lineSum(line), 0);
-const cartCount = () => cart.reduce((count, line) => count + line.qty, 0);
+function openOrder(cakeId, opener) {
+  const cake = findCake(cakeId);
+  const total = cakePrice(cake, orderWeight(cake));
+  orderNow.id = cakeId;
+  orderNow.opener = opener;
+  setFocusCake(cakeId);
 
-function addToCart(id, weight) {
-  const same = cart.find((line) => line.id === id && line.weight === weight);
-  if (same) same.qty += 1;
-  else cart.push({ id, weight, qty: 1 });
-  saveCart();
+  // Торт и вес — обычный текст, изменить его в окне нельзя
+  $("#order-cake").textContent = `${cake.name} · ${weightText(cake, orderWeight(cake))}`;
+  $("#order-price").textContent = money(total);
+  $("#order-prepay").textContent = `Предоплата ${Math.round(CONFIG.prepay * 100)}%: ${money(total * CONFIG.prepay)}`;
+  $("#order-error").hidden = true;
+  $$("#order-form .is-invalid").forEach((field) => field.classList.toggle("is-invalid", false));
+  updateOrderLink();
+
+  $("#order-modal").hidden = false;
+  document.body.classList.add("no-scroll");
+  $("#o-name").focus({ preventScroll: true });
 }
 
-/* ===================== Индикаторы корзины ===================== */
-
-const isDesktop = () => window.matchMedia("(min-width: 1000px)").matches;
-
-function updateCartUI() {
-  const count = cartCount();
-  const label = `${count} ${plural(count, "торт", "торта", "тортов")} · ${money(cartTotal())}`;
-
-  // Иконка в шапке
-  const badge = $("#cart-badge");
-  badge.textContent = count;
-  badge.classList.toggle("is-shown", count > 0);
-  $("#cart-icon").setAttribute("aria-label", count ? `Корзина: ${label}` : "Корзина пуста");
-
-  // Липкая полоса на телефоне
-  $("#cart-bar-text").textContent = label;
-  showCartBar(count > 0);
+function closeOrder() {
+  $("#order-modal").hidden = true;
+  if ($("#pd").hidden) document.body.classList.toggle("no-scroll", false);
+  orderNow.opener?.focus({ preventScroll: true });
 }
 
-function showCartBar(visible) {
-  const bar = $("#cart-bar");
-  bar.hidden = !visible;
-  document.body.style.setProperty("--bar-h", visible ? "84px" : "0px");
-}
-
-// Корзина подпрыгивает, счётчик «пыхает»
-function bump(elements) {
-  elements.forEach(([element, name]) => {
-    element.classList.remove(name);
-    void element.offsetWidth; // перезапуск анимации
-    element.classList.add(name);
-  });
-}
-
-/* ===================== Полёт фото в корзину ===================== */
-
-// Куда летим: иконка в шапке (компьютер) или иконка в полосе (телефон)
-function cartTarget() {
-  if (isDesktop()) return $("#cart-icon");
-  const bar = $("#cart-bar");
-  if (bar.hidden) updateCartUI(); // первый торт: полоса выезжает сразу с актуальной суммой
-  // Полоса может как раз выезжать — меряем её конечное положение
-  bar.style.animation = "none";
-  const rect = $("#cart-bar-icon").getBoundingClientRect();
-  bar.style.animation = "";
-  return { element: $("#cart-bar-icon"), rect };
-}
-
-function flyToCart(media, onLand) {
-  const target = cartTarget();
-  const targetEl = target.element || target;
-  const to = target.rect || targetEl.getBoundingClientRect();
-
-  if (reducedMotion.matches || !media.animate) {
-    onLand(targetEl);
-    return;
-  }
-
-  const from = media.getBoundingClientRect();
-  const dx = to.left + to.width / 2 - (from.left + from.width / 2);
-  const dy = to.top + to.height / 2 - (from.top + from.height / 2);
-  const lift = Math.min(0, dy) - 90; // верх дуги — выше и фото, и корзины
-
-  // Копия фото: внешний слой летит по горизонтали, внутренний — вверх и вниз
-  const flyer = document.createElement("div");
-  flyer.style.cssText = `position:fixed;z-index:120;left:${from.left}px;top:${from.top}px;width:${from.width}px;height:${from.height}px;pointer-events:none`;
-  const inner = document.createElement("div");
-  inner.className = "flyer";
-  inner.style.cssText = "position:absolute;inset:0";
-  inner.appendChild(media.cloneNode(true));
-  flyer.appendChild(inner);
-  document.body.appendChild(flyer);
-
-  const duration = 900;
-  const endScale = Math.max(0.06, 28 / from.width);
-  flyer.animate(
-    [{ transform: "translateX(0)" }, { transform: `translateX(${dx}px)` }],
-    { duration, easing: "cubic-bezier(.35,.1,.6,1)", fill: "forwards" }
-  );
-  const flight = inner.animate(
-    [
-      { transform: "translateY(0) scale(1) rotate(0)", borderRadius: "18px", easing: "cubic-bezier(.2,.7,.4,1)" },
-      { transform: `translateY(${lift}px) scale(.45) rotate(-8deg)`, borderRadius: "40px", offset: 0.42, easing: "cubic-bezier(.6,0,.9,.4)" },
-      { transform: `translateY(${dy}px) scale(${endScale}) rotate(12deg)`, borderRadius: "50%", opacity: 0.6 }
-    ],
-    { duration, fill: "forwards" }
-  );
-  flight.onfinish = () => {
-    flyer.remove();
-    onLand(targetEl);
-  };
-}
-
-/* ===================== Панель оформления ===================== */
-
-function renderSheet() {
-  const list = $("#lines");
-  if (!cart.length) {
-    list.innerHTML = '<li class="lines__empty">Корзина пуста — выберите торт в каталоге</li>';
-  } else {
-    list.innerHTML = cart.map((line, i) => {
-      const cake = findCake(line.id);
-      return `
-        <li class="line" data-index="${i}">
-          ${mediaHTML(cake, false)}
-          <div>
-            <b class="line__name">${cake.name}</b>
-            <span class="line__meta">${cake.fixed
-              ? `${cake.fixed.weight} · ${money(cake.fixed.price)}`
-              : `${kilos(line.weight)} · ${money(cake.pricePerKg)}/кг`}</span>
-            <div class="qty">
-              <button type="button" data-act="minus" aria-label="Убрать один">−</button>
-              <output>${line.qty}</output>
-              <button type="button" data-act="plus" aria-label="Добавить ещё один">+</button>
-            </div>
-          </div>
-          <b class="line__sum">${money(lineSum(line))}</b>
-        </li>`;
-    }).join("");
-  }
-
-  $("#sum-total").textContent = money(cartTotal());
-  $("#sum-prepay").textContent = money(cartTotal() * CONFIG.prepay);
-  updateWhatsAppLink();
-}
-
-let lastFocus = null;
-
-function openSheet() {
-  lastFocus = document.activeElement;
-  renderSheet();
-  hideError();
-  document.body.classList.add("sheet-open", "no-scroll");
-  $("#sheet-close").focus({ preventScroll: true });
-}
-
-function closeSheet() {
-  document.body.classList.remove("sheet-open", "no-scroll");
-  lastFocus?.focus({ preventScroll: true });
-}
-
-/* ===================== Проверка формы и текст заказа ===================== */
-
-const isDelivery = () => $('input[name="delivery"]:checked').value === "yandex";
-const phoneDigits = () => $("#f-phone").value.replace(/\D/g, "");
-
-// Возвращает список проблем: [{ field, text }]
+// Чего не хватает в форме. Пусто — можно отправлять
 function orderProblems() {
   const problems = [];
-  const date = $("#f-date").value;
-  if (!cart.length) problems.push({ text: "Добавьте торт в корзину." });
-  if (!date || date < $("#f-date").min) {
-    problems.push({ field: "#f-date", text: `Выберите дату не раньше ${prettyDate($("#f-date").min)}.` });
-  }
-  if (!$("#f-name").value.trim()) problems.push({ field: "#f-name", text: "Укажите имя." });
-  if (phoneDigits().length < 10) problems.push({ field: "#f-phone", text: "Укажите телефон." });
+  const name = $("#o-name");
+  const date = $("#o-date");
+  if (!name.value.trim()) problems.push([name, "Напишите имя"]);
+  if (!date.value) problems.push([date, "Выберите дату"]);
+  else if (date.value < date.min) problems.push([date, `Дата — не раньше ${prettyDate(date.min)}`]);
   return problems;
 }
 
-function showProblems(problems) {
-  $$(".is-invalid").forEach((el) => el.classList.remove("is-invalid"));
-  problems.forEach((p) => p.field && $(p.field).classList.add("is-invalid"));
-  const error = $("#form-error");
-  error.textContent = problems.map((p) => p.text).join(" ");
-  error.hidden = false;
-  const first = problems.find((p) => p.field);
-  if (first) $(first.field).focus();
-}
-
-function hideError() {
-  $("#form-error").hidden = true;
-  $$(".is-invalid").forEach((el) => el.classList.remove("is-invalid"));
-}
-
+// Текст для WhatsApp — ровно в том виде, в каком его увидит кондитер
 function orderText() {
-  const rows = cart.map((line, i) => {
-    const cake = findCake(line.id);
-    const qty = line.qty > 1 ? ` × ${line.qty}` : "";
-    return `${i + 1}. ${cake.name}, ${weightText(cake, line.weight)}${qty} — ${money(lineSum(line))}`;
-  });
-  const address = $("#f-address").value.trim();
-  const receive = isDelivery()
-    ? `Яндекс.Доставка${address ? ", " + address : ""} (оплачивается отдельно)`
-    : `самовывоз, ${CONFIG.address}`;
-  const inscription = $("#f-text").value.trim();
-  const comment = $("#f-comment").value.trim();
-
+  const cake = findCake(orderNow.id);
+  const total = cakePrice(cake, orderWeight(cake));
+  const weight = cake.fixed ? cake.fixed.weight : `${String(orderWeight(cake)).replace(".", ",")} кг`;
   return [
-    "Здравствуйте! Заказ в «ТортДВ»:",
-    "",
-    ...rows,
-    "",
-    `Итого: ${money(cartTotal())}`,
-    `Предоплата 50%: ${money(cartTotal() * CONFIG.prepay)}`,
-    `Дата: ${prettyDate($("#f-date").value)}`,
-    `Получение: ${receive}`,
-    inscription ? `Надпись: «${inscription}»` : "",
-    comment ? `Комментарий: ${comment}` : "",
-    refFile ? "Фото-пример: прикреплю следующим сообщением" : "",
-    `Имя: ${$("#f-name").value.trim()}`,
-    `Телефон: ${$("#f-phone").value.trim()}`
-  ].filter((row, i, all) => row !== "" || all[i - 1] !== "").join("\n").trim();
+    "Здравствуйте! Хочу заказать торт.",
+    `Торт: ${cake.name}`,
+    `Вес: ${weight}`,
+    `Дата: ${prettyDate($("#o-date").value)}`,
+    `Имя: ${$("#o-name").value.trim()}`,
+    `Стоимость: ${money(total)}`,
+    `Предоплата ${Math.round(CONFIG.prepay * 100)}%: ${money(total * CONFIG.prepay)}`
+  ].join("\n");
 }
 
-function updateWhatsAppLink() {
-  $("#wa-btn").href = orderProblems().length
+function updateOrderLink() {
+  $("#order-send").href = orderProblems().length
     ? "#"
     : `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(orderText())}`;
 }
 
-/* ===================== Окно оплаты (демо) ===================== */
+function setupOrder() {
+  // Дата: не раньше чем через CONFIG.minDays дней
+  const date = $("#o-date");
+  date.min = dateFromToday(CONFIG.minDays);
+  date.value = date.min;
+  $("#o-date-hint").textContent = `Не раньше чем через ${CONFIG.minDays} дней`;
 
-// Рисуем «QR-код»-заглушку: узор с угловыми квадратами, без реальных данных
-function fakeQR() {
-  const size = 25;
-  let seed = 42;
-  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-  const inFinder = (x, y) => (x < 8 && y < 8) || (x > size - 9 && y < 8) || (x < 8 && y > size - 9);
-  let cells = "";
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      if (!inFinder(x, y) && rnd() > 0.52) cells += `<rect x="${x}" y="${y}" width="1" height="1"/>`;
-    }
-  }
-  const finder = (x, y) =>
-    `<rect x="${x}" y="${y}" width="7" height="7"/><rect x="${x + 1}" y="${y + 1}" width="5" height="5" fill="#fff"/><rect x="${x + 2}" y="${y + 2}" width="3" height="3"/>`;
-  return `<svg viewBox="0 0 ${size} ${size}" fill="#3b2219" shape-rendering="crispEdges">${cells}${finder(0, 0)}${finder(size - 7, 0)}${finder(0, size - 7)}</svg>`;
-}
+  $("#order-form").addEventListener("input", (event) => {
+    event.target.classList.toggle("is-invalid", false);
+    $("#order-error").hidden = true;
+    updateOrderLink();
+  });
+  $("#order-form").addEventListener("submit", (event) => event.preventDefault());
 
-function openPay() {
-  $("#pay-sum").textContent = money(cartTotal() * CONFIG.prepay);
-  $("#pay-modal").hidden = false;
-  $("#pay-close").focus();
-}
+  // Не хватает имени или даты — подсказываем, а не открываем пустой чат
+  $("#order-send").addEventListener("click", (event) => {
+    const problems = orderProblems();
+    if (!problems.length) return; // ссылка готова — WhatsApp откроется в новой вкладке
+    event.preventDefault();
+    problems.forEach(([field]) => field.classList.add("is-invalid"));
+    $("#order-error").textContent = problems.map(([, text]) => text).join(". ") + ".";
+    $("#order-error").hidden = false;
+    problems[0][0].focus();
+  });
 
-function closePay() {
-  $("#pay-modal").hidden = true;
-  $("#pay-btn").focus();
+  $("#order-close").addEventListener("click", closeOrder);
+  $("#order-modal").addEventListener("click", (event) => {
+    if (event.target.id === "order-modal") closeOrder();
+  });
+
+  // Липкая кнопка на телефоне
+  setFocusCake(focusCakeId);
+  $("#order-bar").addEventListener("click", () => openOrder(focusCakeId, $("#order-bar")));
 }
 
 /* ===================== Страница торта ===================== */
@@ -804,6 +635,7 @@ const pd = { id: null, photo: 0, tab: "about", opener: null };
 
 function openProduct(cakeId, opener) {
   const cake = findCake(cakeId);
+  setFocusCake(cakeId);
   pd.id = cakeId;
   pd.photo = 0;
   pd.tab = "about";
@@ -855,7 +687,7 @@ function openProduct(cakeId, opener) {
 
 function closeProduct() {
   $("#pd").hidden = true;
-  if (!document.body.classList.contains("sheet-open")) document.body.classList.remove("no-scroll");
+  document.body.classList.toggle("no-scroll", false);
   pd.opener?.focus({ preventScroll: true });
 }
 
@@ -933,320 +765,9 @@ function setupProduct() {
     renderProductTab();
   });
 
-  // «В корзину»: торт летит в корзину, страница остаётся открытой
-  $("#pd-add").addEventListener("click", (event) => {
-    const cake = findCake(pd.id);
-    addToCart(pd.id, cake.fixed ? null : chosenWeight[pd.id]);
-    flyToCart($(".media", $("#pd-photo")), (targetEl) => {
-      updateCartUI();
-      bump([[targetEl, "is-bump"], [isDesktop() ? $("#cart-badge") : $("#cart-bar-text"), "is-pop"]]);
-    });
-    const button = event.currentTarget;
-    button.textContent = "✓ Добавлен";
-    button.classList.add("is-added");
-    clearTimeout(button.timer);
-    button.timer = setTimeout(() => {
-      button.textContent = "В корзину";
-      button.classList.remove("is-added");
-    }, 1400);
-  });
-
-  // «Купить в 1 клик»: кладём торт и сразу открываем оформление
-  $("#pd-quick").addEventListener("click", () => {
-    const cake = findCake(pd.id);
-    addToCart(pd.id, cake.fixed ? null : chosenWeight[pd.id]);
-    updateCartUI();
-    closeProduct();
-    openSheet();
-  });
+  // «Заказать»: окно заказа поверх страницы торта
+  $("#pd-add").addEventListener("click", (event) => openOrder(pd.id, event.currentTarget));
 }
-
-/* ===================== Фото-пример ===================== */
-
-// Выбранное фото живёт только в браузере клиента: сайт без сервера не может его отправить
-let refFile = null;
-
-function setRefFile(file) {
-  const img = $("#ref-img");
-  if (img.src) URL.revokeObjectURL(img.src);
-  refFile = file || null;
-  if (refFile) {
-    img.src = URL.createObjectURL(refFile);
-    $("#ref-name").textContent = refFile.name;
-  } else {
-    img.removeAttribute("src");
-    $("#f-ref").value = "";
-  }
-  $("#ref-preview").hidden = !refFile;
-  $("#ref-pick").hidden = Boolean(refFile);
-  updateWhatsAppLink();
-}
-
-/* ===================== Заказ и отслеживание ===================== */
-
-const ORDER_KEY = "tortdv-last-order";
-
-// Последний оформленный заказ: хранится в браузере, чтобы «Мой заказ» работал после перезагрузки
-let order = loadOrder();
-
-function loadOrder() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(ORDER_KEY));
-    return saved && Array.isArray(saved.lines) ? saved : null;
-  } catch (e) {
-    return null;
-  }
-}
-
-function saveOrder() {
-  try {
-    localStorage.setItem(ORDER_KEY, JSON.stringify(order));
-  } catch (e) {
-    /* без сохранения отслеживание работает до перезагрузки */
-  }
-}
-
-// Статусы заказа. order.done — сколько из них уже пройдено
-function orderSteps(o) {
-  return [
-    { name: "Заказ принят", note: `К ${prettyDate(o.date)}` },
-    o.done > 1
-      ? { name: "Предоплата получена", note: `${money(o.prepay)} по СБП` }
-      : { name: "Предоплата 50%", note: `Ждём ${money(o.prepay)} — реквизиты пришлём в WhatsApp` },
-    { name: "Готовим торт", note: "Кондитер приступает ближе к вашей дате" },
-    o.delivery
-      ? { name: "Передан курьеру", note: "Яндекс.Доставка везёт торт к вам" }
-      : { name: "Готов к выдаче", note: `Можно забирать: ${CONFIG.address}` },
-    { name: "Торт у вас", note: "Приятного праздника!" }
-  ];
-}
-
-// Заголовок и подпись экрана — по тому, сколько шагов пройдено
-function orderHeadline(o) {
-  switch (o.done) {
-    case 1: return ["Заказ принят", "Мы получили заказ. Осталось внести предоплату — напишем вам в WhatsApp."];
-    case 2: return ["Заказ принят", "Предоплата получена. Приступим к торту ближе к вашей дате."];
-    case 3: return ["Готовим ваш торт", "Кондитер уже работает над заказом."];
-    case 4: return o.delivery
-      ? ["Торт в пути", "Курьер Яндекс.Доставки везёт торт к вам."]
-      : ["Торт готов", `Можно забирать: ${CONFIG.address}.`];
-    default: return ["Торт у вас", "Спасибо, что выбрали «ТортДВ»!"];
-  }
-}
-
-// Собираем заказ из корзины и формы. paid — предоплата внесена (в демо — по кнопке)
-function acceptOrder(paid) {
-  const address = $("#f-address").value.trim();
-  order = {
-    number: "ТД-" + String(Math.floor(1000 + Math.random() * 9000)),
-    lines: cart.map((line) => {
-      const cake = findCake(line.id);
-      return { name: cake.name, weight: weightText(cake, line.weight), qty: line.qty, sum: lineSum(line) };
-    }),
-    total: cartTotal(),
-    prepay: cartTotal() * CONFIG.prepay,
-    date: $("#f-date").value,
-    delivery: isDelivery(),
-    receive: isDelivery() ? `Яндекс.Доставка${address ? ", " + address : ""}` : `Самовывоз, ${CONFIG.address}`,
-    inscription: $("#f-text").value.trim(),
-    comment: $("#f-comment").value.trim(),
-    hasRef: Boolean(refFile),
-    done: paid ? 2 : 1,
-    review: null
-  };
-  saveOrder();
-
-  // Корзина пуста, пожелания к этому торту больше не нужны (имя и телефон оставляем)
-  cart = [];
-  saveCart();
-  updateCartUI();
-  $("#f-text").value = "";
-  $("#f-comment").value = "";
-  setRefFile(null);
-
-  $("#pay-modal").hidden = true;
-  closeSheet();
-  openTrack(true);
-}
-
-function renderTrack() {
-  const steps = orderSteps(order);
-  const finished = order.done >= steps.length;
-  const [title, lead] = orderHeadline(order);
-
-  $("#track-number").textContent = `Заказ № ${order.number}`;
-  $("#track-title").textContent = title;
-  $("#track-lead").textContent = lead;
-
-  // Если список уже нарисован — меняем только классы и тексты, чтобы линия «заливалась» плавно
-  const list = $("#track-steps");
-  if (list.children.length !== steps.length) {
-    list.innerHTML = steps.map(() => `
-      <li class="track__step">
-        <span class="track__dot" aria-hidden="true">✓</span>
-        <b class="track__name"></b>
-        <span class="track__note"></span>
-      </li>`).join("");
-  }
-  [...list.children].forEach((item, i) => {
-    item.classList.toggle("is-done", i < order.done);
-    item.classList.toggle("is-current", i === order.done);
-    $(".track__name", item).textContent = steps[i].name;
-    $(".track__note", item).textContent = steps[i].note;
-  });
-
-  const row = (label, value, wrap) =>
-    value ? `<p${wrap ? ' class="is-wrap"' : ""}><span>${label}</span><b></b></p>` : "";
-  const summary = $("#track-summary");
-  summary.innerHTML =
-    "<ul>" + order.lines.map(() => "<li><span></span><b></b></li>").join("") + "</ul>" +
-    row("Итого", true) + row("Предоплата 50%", true) + row("Дата", true) +
-    row("Получение", true, true) + row("Надпись", order.inscription, true) + row("Комментарий", order.comment, true);
-
-  // Тексты клиента вставляем через textContent — так в страницу не попадёт чужая разметка
-  $$("li", summary).forEach((item, i) => {
-    const line = order.lines[i];
-    $("span", item).textContent = `${line.name}, ${line.weight}${line.qty > 1 ? " × " + line.qty : ""}`;
-    $("b", item).textContent = money(line.sum);
-  });
-  const values = [money(order.total), money(order.prepay), prettyDate(order.date), order.receive, order.inscription, order.comment].filter(Boolean);
-  $$("p b", summary).forEach((cell, i) => (cell.textContent = values[i]));
-
-  $("#track-ref").hidden = !order.hasRef || order.done > 2;
-
-  // Торт получен: просим отзыв и даём задать вопрос
-  $("#after").hidden = !finished;
-  $("#track-next").hidden = finished;
-  $(".track__demo p").textContent = finished
-    ? "Демо завершено: так клиент видит весь путь заказа."
-    : "На рабочем сайте статус меняет кондитерская — клиент просто видит, где его торт.";
-  if (finished) renderReview();
-}
-
-function renderReview() {
-  const stars = order.review?.stars || 0;
-  $$("#stars button").forEach((button) => {
-    const on = Number(button.dataset.star) <= stars;
-    button.classList.toggle("is-on", on);
-    button.setAttribute("aria-checked", String(Number(button.dataset.star) === stars));
-  });
-  const sent = Boolean(order.review?.sent);
-  $("#review-send").hidden = sent;
-  $("#review-text").disabled = sent;
-  if (sent) {
-    $("#review-text").value = order.review.text || "";
-    showReviewNote("Спасибо за отзыв! В демо он сохранён только на этом устройстве. На рабочем сайте его получит кондитерская.");
-  }
-}
-
-function showReviewNote(text) {
-  const note = $("#review-thanks");
-  note.textContent = text;
-  note.hidden = false;
-}
-
-function openTrack(celebrate) {
-  if (!order) return;
-  $("#review-thanks").hidden = true;
-  $("#question-error").hidden = true;
-  $("#review-text").value = "";
-  renderTrack();
-  $("#track").hidden = false;
-  document.body.classList.add("no-scroll");
-  $("#order-chip").hidden = false;
-  $(".track__card").scrollTop = 0;
-  $("#track-close").focus({ preventScroll: true });
-  if (celebrate) sprinkle();
-}
-
-function closeTrack() {
-  $("#track").hidden = true;
-  document.body.classList.remove("no-scroll");
-  $("#order-chip").focus({ preventScroll: true });
-}
-
-// Посыпка сыплется сверху карточки
-function sprinkle() {
-  const box = $("#sprinkles");
-  if (reducedMotion.matches || !box.animate) return;
-  const colors = ["#e8638c", "#f6b63c", "#63b99a", "#9b7fd1", "#cf7a8e", "#f3d3d9"];
-  const fall = Math.min(box.clientHeight || 600, 620) + 40;
-  for (let i = 0; i < 44; i++) {
-    const bit = document.createElement("i");
-    const turn = Math.random() * 360;
-    bit.style.left = Math.random() * 100 + "%";
-    bit.style.background = colors[i % colors.length];
-    box.appendChild(bit);
-    bit.animate(
-      [
-        { transform: `translateY(0) rotate(${turn}deg)`, opacity: 1 },
-        { transform: `translateY(${fall * (0.6 + Math.random() * 0.4)}px) rotate(${turn + 360 + Math.random() * 360}deg)`, opacity: 0 }
-      ],
-      { duration: 1500 + Math.random() * 1500, delay: Math.random() * 600, easing: "cubic-bezier(.3,.6,.5,1)", fill: "backwards" }
-    ).onfinish = () => bit.remove();
-  }
-}
-
-function setupTrack() {
-  $("#order-chip").hidden = !order;
-  $("#order-chip").addEventListener("click", () => openTrack(false));
-  $("#track-close").addEventListener("click", closeTrack);
-  $("#track").addEventListener("click", (event) => {
-    if (event.target.id === "track") closeTrack();
-  });
-
-  // Демо: двигаем заказ к следующему статусу
-  $("#track-next").addEventListener("click", () => {
-    const total = orderSteps(order).length;
-    order.done = Math.min(order.done + 1, total);
-    saveOrder();
-    renderTrack();
-    if (order.done === total) {
-      sprinkle();
-      $("#after").scrollIntoView({ behavior: reducedMotion.matches ? "auto" : "smooth", block: "start" });
-    }
-  });
-
-  // Звёзды
-  $("#stars").addEventListener("click", (event) => {
-    const button = event.target.closest("[data-star]");
-    if (!button || order.review?.sent) return;
-    order.review = { ...order.review, stars: Number(button.dataset.star) };
-    renderReview();
-    $("#review-thanks").hidden = true;
-    bump([[button, "is-pop"]]);
-  });
-
-  // Отзыв: в демо сохраняется только в браузере
-  $("#review-send").addEventListener("click", () => {
-    if (!order.review?.stars) {
-      showReviewNote("Поставьте оценку — от 1 до 5 звёзд.");
-      return;
-    }
-    order.review = { ...order.review, text: $("#review-text").value.trim(), sent: true };
-    saveOrder();
-    renderReview();
-  });
-
-  // Вопрос по торту уходит в WhatsApp готовым текстом
-  const updateQuestionLink = () => {
-    const text = $("#question-text").value.trim();
-    $("#question-send").href = text
-      ? `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(`Вопрос по заказу № ${order.number}: ${text}`)}`
-      : "#";
-    if (text) $("#question-error").hidden = true;
-  };
-  $("#question-text").addEventListener("input", updateQuestionLink);
-  $("#question-send").addEventListener("click", (event) => {
-    updateQuestionLink();
-    if ($("#question-text").value.trim()) return;
-    event.preventDefault();
-    $("#question-error").hidden = false;
-  });
-}
-
-/* ===================== Появление блоков при прокрутке ===================== */
-
 
 /* ===================== Галерея фото ===================== */
 
@@ -1273,8 +794,8 @@ function openGallery(cakeId, opener, startIndex = 0) {
 
 function closeGallery() {
   $("#lightbox").hidden = true;
-  // Под галереей может быть открыта панель заказа или страница торта — тогда прокрутку не возвращаем
-  if (!document.body.classList.contains("sheet-open") && $("#pd").hidden) {
+  // Под галереей может быть открыта страница торта — тогда прокрутку не возвращаем
+  if ($("#pd").hidden) {
     document.body.classList.remove("no-scroll");
   }
   gallery.opener?.focus({ preventScroll: true });
@@ -1412,6 +933,7 @@ function setupCalc() {
   select.value = calc.id;
   select.addEventListener("change", () => {
     calc.id = select.value;
+    setFocusCake(calc.id);
     renderCalc();
   });
   $("#calc-weights").addEventListener("click", (event) => {
@@ -1442,24 +964,13 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#head-call").href = `tel:${CONFIG.phone.replace(/[^\d+]/g, "")}`;
   $("#head-wa").href = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent("Здравствуйте! Хочу заказать торт.")}`;
   setupPriceFilter();
-  updateCartUI();
+  setupOrder();
   // Телефон в подвале — тоже из data.js
   $("#footer-tel").textContent = CONFIG.phone;
   $("#footer-tel").href = `tel:${CONFIG.phone.replace(/[^\d+]/g, "")}`;
   $("#footer-wa").href = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent("Здравствуйте! Хочу заказать торт.")}`;
-  $("#qr").innerHTML = fakeQR();
-
-  // Календарь: не раньше чем через 7 дней
-  const dateInput = $("#f-date");
-  dateInput.min = dateFromToday(CONFIG.minDays);
-  dateInput.value = dateInput.min;
   setupGallery();
-  setupTrack();
   setupProduct();
-
-  // Фото-пример: выбрать и убрать
-  $("#f-ref").addEventListener("change", (event) => setRefFile(event.target.files[0]));
-  $("#ref-remove").addEventListener("click", () => setRefFile(null));
 
   // Плашки по поводу над каталогом
   $("#filters").addEventListener("click", (event) => {
@@ -1481,7 +992,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#filter-reset").addEventListener("click", resetFilters);
   $("#empty-reset").addEventListener("click", resetFilters);
 
-  // Карточки: выбор веса и «В корзину»
+  // Карточки: выбор веса и «Заказать»
   $("#catalog").addEventListener("click", (event) => {
     const card = event.target.closest(".card");
     if (!card) return;
@@ -1499,101 +1010,25 @@ document.addEventListener("DOMContentLoaded", () => {
       chosenWeight[id] = Number(weightBtn.dataset.kg);
       updateCardPrice(id);
       onCardWeightChange();
+      setFocusCake(id);
       return;
     }
 
-    const addBtn = event.target.closest("[data-add]");
+    const orderBtn = event.target.closest("[data-order]");
     // Нажали на карточку мимо кнопок — открываем страницу торта
-    if (!addBtn) {
+    if (!orderBtn) {
       openProduct(id, card);
       return;
     }
-
-    // У торта с фиксированной ценой веса нет — храним null
-    addToCart(id, findCake(id).fixed ? null : chosenWeight[id]);
-    flyToCart($(".media", card), (targetEl) => {
-      updateCartUI();
-      if (isDesktop()) bump([[targetEl, "is-bump"], [$("#cart-badge"), "is-pop"]]);
-      else bump([[targetEl, "is-bump"], [$("#cart-bar-text"), "is-pop"]]);
-    });
-
-    // Кнопка на секунду показывает, что торт добавлен
-    addBtn.textContent = "✓ Добавлен";
-    addBtn.classList.add("is-added");
-    clearTimeout(addBtn.timer);
-    addBtn.timer = setTimeout(() => {
-      addBtn.textContent = "В корзину";
-      addBtn.classList.remove("is-added");
-    }, 1400);
+    openOrder(id, orderBtn);
   });
 
-  // Открыть и закрыть панель оформления
-  $("#cart-bar").addEventListener("click", openSheet);
-  $("#cart-icon").addEventListener("click", openSheet);
-  $("#sheet-close").addEventListener("click", closeSheet);
-  $("#overlay").addEventListener("click", closeSheet);
-
-  // Количество в составе заказа
-  $("#lines").addEventListener("click", (event) => {
-    const button = event.target.closest("[data-act]");
-    if (!button) return;
-    const line = cart[Number(button.closest(".line").dataset.index)];
-    line.qty += button.dataset.act === "plus" ? 1 : -1;
-    cart = cart.filter((item) => item.qty > 0);
-    saveCart();
-    renderSheet();
-    updateCartUI();
-  });
-
-  // Самовывоз / Яндекс.Доставка
-  $("#order-form").addEventListener("change", () => {
-    $("#address-field").hidden = !isDelivery();
-    $("#delivery-hint").textContent = isDelivery()
-      ? "Курьер Яндекс.Доставки, оплачивается отдельно по тарифу"
-      : CONFIG.address;
-    updateWhatsAppLink();
-  });
-  $("#order-form").addEventListener("input", (event) => {
-    event.target.classList.remove("is-invalid");
-    updateWhatsAppLink();
-  });
-  $("#order-form").addEventListener("submit", (event) => event.preventDefault());
-
-  // Оплата по СБП (демо)
-  $("#pay-btn").addEventListener("click", () => {
-    const problems = orderProblems();
-    if (problems.length) return showProblems(problems);
-    hideError();
-    openPay();
-  });
-  $("#pay-close").addEventListener("click", closePay);
-  $("#pay-modal").addEventListener("click", (event) => {
-    if (event.target.id === "pay-modal") closePay();
-  });
-
-  // Демо-оплата прошла: заказ принят, предоплата получена
-  $("#pay-done").addEventListener("click", () => acceptOrder(true));
-
-  // WhatsApp: если данных не хватает — подсказываем, а не открываем пустой чат.
-  // Если всё в порядке — чат открывается в новой вкладке, а здесь показываем «Заказ принят»
-  $("#wa-btn").addEventListener("click", (event) => {
-    const problems = orderProblems();
-    if (problems.length) {
-      event.preventDefault();
-      showProblems(problems);
-      return;
-    }
-    setTimeout(() => acceptOrder(false), 400);
-  });
-
-  // Escape закрывает сначала галерею, окно оплаты или экран заказа, потом панели
+  // Escape закрывает сначала галерею, потом окно заказа, страницу торта, фильтры
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
     if (!$("#lightbox").hidden) closeGallery();
-    else if (!$("#track").hidden) closeTrack();
-    else if (!$("#pay-modal").hidden) closePay();
-    else if (!$("#pd").hidden && !document.body.classList.contains("sheet-open")) closeProduct();
-    else if (document.body.classList.contains("sheet-open")) closeSheet();
+    else if (!$("#order-modal").hidden) closeOrder();
+    else if (!$("#pd").hidden) closeProduct();
     else closeFilters();
   });
 });
