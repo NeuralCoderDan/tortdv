@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
 
@@ -22,8 +22,8 @@
   <!-- Шапка: логотип, «Позвонить» и «WhatsApp», меню, корзина (на компьютере) -->
   <header class="header" id="top">
     <div class="container header__inner">
-      <!-- Если в data.js указан logo — script.js поставит картинку вместо текста -->
-      <a href="#top" class="logo" id="logo">ТортДВ</a>
+      <!-- Логотип: картинка из images/logo.png, по нажатию — наверх страницы -->
+      <a href="#top" class="logo" id="logo"><img src="images/logo.png" alt="ТортДВ" height="52" style="display:block"></a>
       <!-- Номера подставляет script.js из data.js -->
       <div class="header__contacts">
         <a class="hbtn" id="head-call" href="#">
@@ -484,7 +484,7 @@
   </div>
 
   <!-- Сначала данные, потом логика -->
-  <script src="data.js?v=3"></script>
-  <script src="script.js?v=3"></script>
+  <script src="data.js?v=4"></script>
+  <script src="script.js?v=4"></script>
 </body>
 </html>

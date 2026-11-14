@@ -1370,15 +1370,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (button) openProduct(button.dataset.cake, button);
   });
 
-  // Логотип: картинка из data.js, если указана; иначе остаётся текст «ТортДВ»
-  if (CONFIG.logo) {
-    const img = document.createElement("img");
-    img.src = CONFIG.logo;
-    img.alt = "ТортДВ";
-    img.onerror = () => img.replaceWith("ТортДВ"); // файл не нашёлся — снова текст
-    $("#logo").replaceChildren(img);
-  }
-
   // Шапка: «Позвонить» и «WhatsApp» — номера из data.js
   $("#head-call").href = `tel:${CONFIG.phone.replace(/[^\d+]/g, "")}`;
   $("#head-wa").href = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent("Здравствуйте! Хочу заказать торт.")}`;
