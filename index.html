@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
 
@@ -108,7 +108,7 @@
 
           <div class="price-panel__head">
             <h3 class="price-panel__title" id="price-title">
-              Цена за торт при выбранном весе
+              Цена при выбранном весе
               <!-- Выбор веса: варианты подставляет script.js из data.js -->
               <span class="weight-pick">
                 <select id="filter-weight" aria-label="Вес торта для фильтра по цене"></select>
@@ -256,7 +256,7 @@
       <p class="footer__brand">ТортДВ</p>
       <ul class="footer__list">
         <li><span>Самовывоз</span>пер. Фабричный, 25</li>
-        <li><span>Телефон</span><a href="tel:+79625009949">+7 962 500-99-49</a></li>
+        <li><span>Телефон</span><a id="footer-tel" href="#"></a></li>
         <li><span>Почта</span><a href="mailto:zakaz@tortdv.ru">zakaz@tortdv.ru</a></li>
         <li><span>Доставка</span>Яндекс.Доставка, оплачивается отдельно</li>
       </ul>
@@ -501,7 +501,7 @@
   </div>
 
   <!-- Сначала данные, потом логика -->
-  <script src="data.js"></script>
-  <script src="script.js"></script>
+  <script src="data.js?v=2"></script>
+  <script src="script.js?v=2"></script>
 </body>
 </html>

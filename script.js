@@ -61,7 +61,7 @@ function mediaHTML(cake, lazy = true) {
 
 // Все фото торта для галереи: главное + ракурсы из angles (по порядку galleryLabels)
 function galleryOf(cake) {
-  return SETTINGS.galleryLabels.map((label, i) => ({
+  return CONFIG.galleryLabels.map((label, i) => ({
     label,
     base: i === 0 ? cake.photo : (cake.angles || [])[i - 1] || null
   }));
@@ -99,14 +99,14 @@ function setOdometer(el, value) {
 /* ===================== Каталог и фильтры ===================== */
 
 // Выбранный вес на каждой карточке
-const chosenWeight = Object.fromEntries(CAKES.map((cake) => [cake.id, SETTINGS.defaultWeight]));
+const chosenWeight = Object.fromEntries(CAKES.map((cake) => [cake.id, CONFIG.defaultWeight]));
 
 // Выбранные поводы. Пустой набор — показываем все торты
 const activeTags = new Set();
 let activeSort = "default";
 
 // Вес в заголовке фильтра. Его выбор ставит этот вес на все карточки
-let filterWeight = SETTINGS.defaultWeight;
+let filterWeight = CONFIG.defaultWeight;
 // Цена торта: фиксированная (бенто) или цена за кг × вес
 const cakePrice = (cake, weight) => (cake.fixed ? cake.fixed.price : cake.pricePerKg * weight);
 // Вес для текста: «750–800 г» или «2 кг»
@@ -154,14 +154,14 @@ function renderFilters() {
 }
 
 function renderCatalog() {
-  const rules = `заказ за ${SETTINGS.minDays} дней · предоплата ${SETTINGS.prepay * 100}%`;
+  const rules = `заказ за ${CONFIG.minDays} дней · предоплата ${CONFIG.prepay * 100}%`;
 
   // Торт за кг — плашки веса; торт с фиксированной ценой — просто его вес
   const weightsHTML = (cake) =>
     cake.fixed
       ? `<div class="weights weights--fixed"><span class="weight weight--fixed">${cake.fixed.weight}</span></div>`
       : `<div class="weights" role="radiogroup" aria-label="Вес торта «${cake.name}»">
-          ${SETTINGS.weights.map((kg) => `
+          ${CONFIG.weights.map((kg) => `
             <button class="weight" type="button" role="radio" data-kg="${kg}"
                     aria-checked="${kg === chosenWeight[cake.id]}">
               ${kilos(kg)}
@@ -173,13 +173,13 @@ function renderCatalog() {
       <button class="card__zoom" type="button" data-zoom aria-label="Смотреть все фото торта «${cake.name}»">
         ${mediaHTML(cake)}
         <span class="zoom-hint" aria-hidden="true">
-          <svg viewBox="0 0 12 12"><path d="M7 1h4v4M5 11H1V7M11 1 7 5M1 11l4-4"/></svg>${SETTINGS.galleryLabels.length} фото
+          <svg viewBox="0 0 12 12"><path d="M7 1h4v4M5 11H1V7M11 1 7 5M1 11l4-4"/></svg>${CONFIG.galleryLabels.length} фото
         </span>
       </button>
       <div class="card__body">
         <h3 class="card__name"><span>${cake.name}</span></h3>
         <p class="card__desc">${cake.desc}</p>
-        <p class="terms">${cake.fixed ? cake.fixed.weight : "от " + kilos(SETTINGS.weights[0])} · ${rules}</p>
+        <p class="terms">${cake.fixed ? cake.fixed.weight : "от " + kilos(CONFIG.weights[0])} · ${rules}</p>
         ${weightsHTML(cake)}
         <div class="card__foot">
           <span class="card__price"></span>
@@ -362,13 +362,13 @@ function resetFilters() {
   activeSort = "default";
   $("#filter-sort").value = "default";
   syncTagUI();
-  setFilterWeight(SETTINGS.defaultWeight);
+  setFilterWeight(CONFIG.defaultWeight);
 }
 
 function setupPriceFilter() {
   // Выпадающий список веса в заголовке: 1,5 / 2 / 2,5 / 3 кг
   const weightSelect = $("#filter-weight");
-  weightSelect.innerHTML = SETTINGS.weights
+  weightSelect.innerHTML = CONFIG.weights
     .map((kg) => `<option value="${kg}">${kilos(kg)}</option>`)
     .join("");
   weightSelect.addEventListener("change", () => setFilterWeight(Number(weightSelect.value)));
@@ -531,7 +531,7 @@ function loadCart() {
     return saved.filter((line) => {
       const cake = findCake(line.id);
       if (!cake || !(line.qty > 0)) return false;
-      return cake.fixed ? line.weight === null : SETTINGS.weights.includes(line.weight);
+      return cake.fixed ? line.weight === null : CONFIG.weights.includes(line.weight);
     });
   } catch (e) {
     return [];
@@ -679,7 +679,7 @@ function renderSheet() {
   }
 
   $("#sum-total").textContent = money(cartTotal());
-  $("#sum-prepay").textContent = money(cartTotal() * SETTINGS.prepay);
+  $("#sum-prepay").textContent = money(cartTotal() * CONFIG.prepay);
   updateWhatsAppLink();
 }
 
@@ -740,7 +740,7 @@ function orderText() {
   const address = $("#f-address").value.trim();
   const receive = isDelivery()
     ? `Яндекс.Доставка${address ? ", " + address : ""} (оплачивается отдельно)`
-    : `самовывоз, ${SETTINGS.address}`;
+    : `самовывоз, ${CONFIG.address}`;
   const inscription = $("#f-text").value.trim();
   const comment = $("#f-comment").value.trim();
 
@@ -750,7 +750,7 @@ function orderText() {
     ...rows,
     "",
     `Итого: ${money(cartTotal())}`,
-    `Предоплата 50%: ${money(cartTotal() * SETTINGS.prepay)}`,
+    `Предоплата 50%: ${money(cartTotal() * CONFIG.prepay)}`,
     `Дата: ${prettyDate($("#f-date").value)}`,
     `Получение: ${receive}`,
     inscription ? `Надпись: «${inscription}»` : "",
@@ -764,7 +764,7 @@ function orderText() {
 function updateWhatsAppLink() {
   $("#wa-btn").href = orderProblems().length
     ? "#"
-    : `https://wa.me/${SETTINGS.whatsapp}?text=${encodeURIComponent(orderText())}`;
+    : `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(orderText())}`;
 }
 
 /* ===================== Окно оплаты (демо) ===================== */
@@ -787,7 +787,7 @@ function fakeQR() {
 }
 
 function openPay() {
-  $("#pay-sum").textContent = money(cartTotal() * SETTINGS.prepay);
+  $("#pay-sum").textContent = money(cartTotal() * CONFIG.prepay);
   $("#pay-modal").hidden = false;
   $("#pay-close").focus();
 }
@@ -817,7 +817,7 @@ function openProduct(cakeId, opener) {
   const weights = $("#pd-weights");
   weights.innerHTML = cake.fixed
     ? `<span class="weight weight--fixed">${cake.fixed.weight}</span>`
-    : SETTINGS.weights.map((kg) => `
+    : CONFIG.weights.map((kg) => `
         <button class="weight" type="button" role="radio" data-kg="${kg}"
                 aria-checked="${kg === chosenWeight[cake.id]}">${kilos(kg)}</button>`).join("");
   weights.setAttribute("role", cake.fixed ? "presentation" : "radiogroup");
@@ -830,7 +830,7 @@ function openProduct(cakeId, opener) {
     </button>`).join("");
 
   // Вкладки: описание всегда первое, остальные из настроек
-  $("#pd-tabs").innerHTML = [{ id: "about", label: "Описание" }, ...SETTINGS.tabs, { id: "reviews", label: "Отзывы" }]
+  $("#pd-tabs").innerHTML = [{ id: "about", label: "Описание" }, ...CONFIG.tabs, { id: "reviews", label: "Отзывы" }]
     .map((tab) => `
       <button class="pd__tab" type="button" role="tab" data-tab="${tab.id}"
               aria-selected="${tab.id === pd.tab}">${tab.label}</button>`).join("");
@@ -897,7 +897,7 @@ function renderProductTab() {
 
   const source = pd.tab === "about"
     ? { title: cake.about?.title || cake.name, paragraphs: cake.about?.paragraphs || [cake.desc] }
-    : SETTINGS.tabs.find((tab) => tab.id === pd.tab);
+    : CONFIG.tabs.find((tab) => tab.id === pd.tab);
 
   // Заголовок и абзацы вставляем текстом, чтобы данные не могли принести разметку
   panel.innerHTML = "<h3></h3>" + source.paragraphs.map(() => "<p></p>").join("");
@@ -1016,7 +1016,7 @@ function orderSteps(o) {
     { name: "Готовим торт", note: "Кондитер приступает ближе к вашей дате" },
     o.delivery
       ? { name: "Передан курьеру", note: "Яндекс.Доставка везёт торт к вам" }
-      : { name: "Готов к выдаче", note: `Можно забирать: ${SETTINGS.address}` },
+      : { name: "Готов к выдаче", note: `Можно забирать: ${CONFIG.address}` },
     { name: "Торт у вас", note: "Приятного праздника!" }
   ];
 }
@@ -1029,7 +1029,7 @@ function orderHeadline(o) {
     case 3: return ["Готовим ваш торт", "Кондитер уже работает над заказом."];
     case 4: return o.delivery
       ? ["Торт в пути", "Курьер Яндекс.Доставки везёт торт к вам."]
-      : ["Торт готов", `Можно забирать: ${SETTINGS.address}.`];
+      : ["Торт готов", `Можно забирать: ${CONFIG.address}.`];
     default: return ["Торт у вас", "Спасибо, что выбрали «ТортДВ»!"];
   }
 }
@@ -1044,10 +1044,10 @@ function acceptOrder(paid) {
       return { name: cake.name, weight: weightText(cake, line.weight), qty: line.qty, sum: lineSum(line) };
     }),
     total: cartTotal(),
-    prepay: cartTotal() * SETTINGS.prepay,
+    prepay: cartTotal() * CONFIG.prepay,
     date: $("#f-date").value,
     delivery: isDelivery(),
-    receive: isDelivery() ? `Яндекс.Доставка${address ? ", " + address : ""}` : `Самовывоз, ${SETTINGS.address}`,
+    receive: isDelivery() ? `Яндекс.Доставка${address ? ", " + address : ""}` : `Самовывоз, ${CONFIG.address}`,
     inscription: $("#f-text").value.trim(),
     comment: $("#f-comment").value.trim(),
     hasRef: Boolean(refFile),
@@ -1232,7 +1232,7 @@ function setupTrack() {
   const updateQuestionLink = () => {
     const text = $("#question-text").value.trim();
     $("#question-send").href = text
-      ? `https://wa.me/${SETTINGS.whatsapp}?text=${encodeURIComponent(`Вопрос по заказу № ${order.number}: ${text}`)}`
+      ? `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(`Вопрос по заказу № ${order.number}: ${text}`)}`
       : "#";
     if (text) $("#question-error").hidden = true;
   };
@@ -1379,12 +1379,15 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#hero-art").innerHTML = mediaHTML(CAKES[0], false);
   setupPriceFilter();
   updateCartUI();
-  $("#footer-wa").href = `https://wa.me/${SETTINGS.whatsapp}?text=${encodeURIComponent("Здравствуйте! Хочу заказать торт.")}`;
+  // Телефон в подвале — тоже из data.js
+  $("#footer-tel").textContent = CONFIG.phone;
+  $("#footer-tel").href = `tel:${CONFIG.phone.replace(/[^\d+]/g, "")}`;
+  $("#footer-wa").href = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent("Здравствуйте! Хочу заказать торт.")}`;
   $("#qr").innerHTML = fakeQR();
 
   // Календарь: не раньше чем через 7 дней
   const dateInput = $("#f-date");
-  dateInput.min = dateFromToday(SETTINGS.minDays);
+  dateInput.min = dateFromToday(CONFIG.minDays);
   dateInput.value = dateInput.min;
 
   setupReveal();
@@ -1485,7 +1488,7 @@ document.addEventListener("DOMContentLoaded", () => {
     $("#address-field").hidden = !isDelivery();
     $("#delivery-hint").textContent = isDelivery()
       ? "Курьер Яндекс.Доставки, оплачивается отдельно по тарифу"
-      : SETTINGS.address;
+      : CONFIG.address;
     updateWhatsAppLink();
   });
   $("#order-form").addEventListener("input", (event) => {
