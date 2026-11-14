@@ -88,16 +88,6 @@ textarea {
   color: var(--rose);
 }
 
-/* ===== Плашка «Демо» ===== */
-.demo-bar {
-  padding: 5px var(--gutter);
-  background: var(--choco);
-  color: var(--cream);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-align: center;
-}
-
 /* ===== Кнопки ===== */
 .btn {
   display: inline-flex;
@@ -2434,76 +2424,6 @@ main {
   to { opacity: 0; transform: scale(1.5); }
 }
 
-/* ----- Частые вопросы ----- */
-.faq__list {
-  display: grid;
-  gap: 10px;
-  max-width: 760px;
-}
-
-.faq__item {
-  background: var(--paper);
-  border: 1px solid rgba(234, 217, 200, 0.8);
-  border-radius: 20px;
-  transition: box-shadow 0.4s var(--smooth), opacity 0.9s var(--smooth),
-    transform 0.9s var(--smooth), filter 0.9s var(--smooth);
-}
-
-.faq__item[open] {
-  box-shadow: var(--shadow-soft);
-}
-
-.faq__item summary {
-  position: relative;
-  padding: 18px 56px 18px 20px;
-  font-family: var(--display);
-  font-size: 23px;
-  font-weight: 700;
-  line-height: 1.15;
-  list-style: none;
-  cursor: pointer;
-}
-
-.faq__item summary::-webkit-details-marker {
-  display: none;
-}
-
-/* Плюс, который поворачивается в крестик */
-.faq__item summary::after {
-  content: "+";
-  position: absolute;
-  top: 50%;
-  right: 16px;
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  margin-top: -15px;
-  border-radius: 50%;
-  background: var(--powder);
-  font-family: var(--text);
-  font-size: 20px;
-  font-weight: 500;
-  line-height: 1;
-  color: var(--rose);
-  transition: transform 0.5s var(--spring), background-color 0.3s;
-}
-
-.faq__item[open] summary::after {
-  transform: rotate(135deg);
-}
-
-.faq__item p {
-  margin: 0;
-  padding: 0 20px 20px;
-  color: var(--choco-soft);
-  animation: melt-in 0.55s var(--smooth);
-}
-
-@keyframes melt-in {
-  from { opacity: 0; }
-}
-
 /* ----- Фото-пример в форме заказа ----- */
 .ref {
   position: relative;
@@ -3522,4 +3442,111 @@ main {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
+}
+
+/* ===================== Живые фоны секций ===================== */
+/* Секции чередуются по цвету, чтобы страница не сливалась в один фон */
+.hero {
+  background: #ffffff;
+}
+
+#cakes {
+  background: #fff0f5; /* каталог — светло-розовый */
+}
+
+#reviews {
+  background: #f8f0ff; /* отзывы — нежно-сиреневый */
+}
+
+/* Подвал — тёмно-розовый, текст белый */
+.footer {
+  background: #c0006a;
+  color: #fff;
+}
+
+.footer__list span {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.footer__list a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+/* Кнопка WhatsApp в подвале — белая, чтобы не спорить с розовым фоном */
+.footer .btn--wa {
+  background: #fff;
+  color: #c0006a;
+}
+
+/* ===================== Карточки тортов ===================== */
+.card {
+  background: white;
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+/* «В корзину» — на карточке и на странице торта */
+.card [data-add],
+#pd-add {
+  background: linear-gradient(135deg, #e0006a, #9b00c9);
+}
+
+@media (hover: hover) {
+  .card [data-add]:hover,
+  #pd-add:hover {
+    background: linear-gradient(135deg, #e0006a, #9b00c9);
+    filter: brightness(0.92);
+  }
+}
+
+/* Торт уже в корзине — кнопка тёмная, как и раньше */
+.card [data-add].is-added,
+#pd-add.is-added {
+  background: var(--choco);
+}
+
+/* ===================== Как заказать ===================== */
+/* Секция белая, шаги — на розоватой подложке, каждый в белой карточке */
+.section--choco {
+  background: #ffffff;
+  color: var(--choco);
+}
+
+.section--choco .section__title {
+  color: var(--plum);
+}
+
+.steps {
+  padding: 16px;
+  background: #fff0f5;
+  border-radius: 20px;
+}
+
+.section--choco .step {
+  background: #ffffff;
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  backdrop-filter: none;
+}
+
+.section--choco .step__title {
+  color: var(--choco);
+}
+
+.section--choco .step__title::before {
+  color: var(--rose);
+}
+
+.section--choco .step__text {
+  color: var(--choco-soft);
+}
+
+@media (min-width: 640px) {
+  .steps {
+    padding: 24px;
+  }
 }
