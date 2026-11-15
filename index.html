@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=13">
+  <link rel="stylesheet" href="style.css?v=14">
 </head>
 <body>
 
@@ -32,6 +32,12 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3Z"/><path d="M9 8.5c0 3.5 3 6.5 6.5 6.5l1-1.6-2-1-1 .8c-1-.5-2-1.5-2.4-2.4l.8-1-1-2z"/></svg>
           WhatsApp
         </a>
+        <!-- Корзина: появляется, когда в ней есть торты -->
+        <button class="hbtn hbtn--cart" id="cart-btn" type="button" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 9.5h17l-1.6 9a2 2 0 0 1-2 1.6H7.1a2 2 0 0 1-2-1.6l-1.6-9Z"/><path d="m8 9.5 3-6m5 6-3-6"/></svg>
+          <span id="cart-btn-text">Корзина</span>
+          <span class="hbtn__badge" id="cart-count">0</span>
+        </button>
       </div>
       <nav class="nav" aria-label="Главное меню">
         <a href="#cakes">Торты</a>
@@ -241,6 +247,38 @@
         </label>
         <p class="form-error" id="order-error" role="alert" hidden></p>
         <a class="btn btn--primary btn--lg order__send" id="order-send" href="#" target="_blank" rel="noopener">Отправить заказ в WhatsApp</a>
+        <!-- Несколько тортов: складываем в корзину и отправляем одним сообщением -->
+        <button class="btn btn--ghost btn--lg order__cart" id="order-to-cart" type="button">В корзину</button>
+        <p class="order__hint">Хотите несколько тортов — добавьте их в корзину и отправьте одним сообщением</p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Корзина: список тортов, имя и дата один раз, одно сообщение в WhatsApp -->
+  <div class="modal order" id="cart-modal" role="dialog" aria-modal="true" aria-labelledby="cart-title" hidden>
+    <div class="modal__card order__card">
+      <button class="icon-btn modal__close" id="cart-close" type="button" aria-label="Закрыть">×</button>
+      <h2 class="modal__title" id="cart-title">Корзина</h2>
+
+      <!-- Список тортов рисует script.js -->
+      <ul class="cart__list" id="cart-list"></ul>
+
+      <p class="order__price" id="cart-total"></p>
+      <p class="order__prepay" id="cart-prepay"></p>
+
+      <form class="form order__form" id="cart-form" novalidate>
+        <label class="field">
+          <span class="field__label">Ваше имя</span>
+          <input type="text" id="c-name" autocomplete="name" maxlength="60" required>
+        </label>
+        <label class="field">
+          <span class="field__label">Дата</span>
+          <input type="date" id="c-date" required>
+          <span class="field__hint" id="c-date-hint"></span>
+        </label>
+        <p class="form-error" id="cart-error" role="alert" hidden></p>
+        <a class="btn btn--primary btn--lg order__send" id="cart-send" href="#" target="_blank" rel="noopener">Отправить заказ в WhatsApp</a>
+        <button class="cart__clear" id="cart-clear" type="button">Очистить корзину</button>
       </form>
     </div>
   </div>
@@ -318,7 +356,7 @@
   </div>
 
   <!-- Сначала данные, потом логика -->
-  <script src="data.js?v=13"></script>
-  <script src="script.js?v=13"></script>
+  <script src="data.js?v=14"></script>
+  <script src="script.js?v=14"></script>
 </body>
 </html>

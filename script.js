@@ -623,6 +623,163 @@ function updateOrderLink() {
     : `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(orderText())}`;
 }
 
+/* ===================== Корзина: несколько тортов одним заказом ===================== */
+
+// Корзина живёт только пока открыта страница: обновил — она пустая
+const cart = [];
+
+const lineTotal = (line) => cakePrice(findCake(line.id), line.weight) * line.qty;
+const cartTotal = () => cart.reduce((sum, line) => sum + lineTotal(line), 0);
+const cartCount = () => cart.reduce((n, line) => n + line.qty, 0);
+
+// Тот же торт в том же весе — не новая строка, а +1 к количеству
+function addToCart(cakeId, weight) {
+  const same = cart.find((line) => line.id === cakeId && line.weight === weight);
+  if (same) same.qty += 1;
+  else cart.push({ id: cakeId, weight, qty: 1 });
+  renderCartButton();
+}
+
+function renderCartButton() {
+  const count = cartCount();
+  const button = $("#cart-btn");
+  button.hidden = count === 0;
+  $("#cart-count").textContent = count;
+  // Для озвучки экранным диктором — словами; на экране число видно в кружке
+  button.setAttribute("aria-label", `Корзина: ${count} ${plural(count, "торт", "торта", "тортов")}`);
+}
+
+function renderCart() {
+  $("#cart-list").innerHTML = cart.map((line, i) => {
+    const cake = findCake(line.id);
+    return `
+      <li class="cart__item" data-index="${i}">
+        <div class="cart__photo">${mediaHTML(cake, false)}</div>
+        <div class="cart__info">
+          <b class="cart__name">${cake.name}</b>
+          <span class="cart__meta">${weightText(cake, line.weight)} · ${money(cakePrice(cake, line.weight))}</span>
+          <span class="cart__qty">
+            <button type="button" data-step="-1" aria-label="Убрать один">−</button>
+            <output>${line.qty}</output>
+            <button type="button" data-step="1" aria-label="Добавить ещё один">+</button>
+          </span>
+        </div>
+        <b class="cart__sum">${money(lineTotal(line))}</b>
+      </li>`;
+  }).join("");
+
+  const total = cartTotal();
+  $("#cart-total").textContent = `Итого: ${money(total)}`;
+  $("#cart-prepay").textContent = `Предоплата ${Math.round(CONFIG.prepay * 100)}%: ${money(total * CONFIG.prepay)}`;
+  updateCartLink();
+}
+
+let cartOpener = null;
+
+function openCart(opener) {
+  if (!cart.length) return;
+  cartOpener = opener;
+  renderCart();
+  $("#cart-error").hidden = true;
+  $$("#cart-form .is-invalid").forEach((field) => field.classList.toggle("is-invalid", false));
+  $("#cart-modal").hidden = false;
+  document.body.classList.add("no-scroll");
+  $("#c-name").focus({ preventScroll: true });
+}
+
+function closeCart() {
+  $("#cart-modal").hidden = true;
+  if ($("#pd").hidden && $("#order-modal").hidden) document.body.classList.toggle("no-scroll", false);
+  cartOpener?.focus({ preventScroll: true });
+}
+
+// Чего не хватает в корзине. Пусто — можно отправлять
+function cartProblems() {
+  const problems = [];
+  const name = $("#c-name");
+  const date = $("#c-date");
+  if (!name.value.trim()) problems.push([name, "Напишите имя"]);
+  if (!date.value) problems.push([date, "Выберите дату"]);
+  else if (date.value < date.min) problems.push([date, `Дата — не раньше ${prettyDate(date.min)}`]);
+  return problems;
+}
+
+// Все торты одним сообщением, пронумерованным списком
+function cartText() {
+  const total = cartTotal();
+  const lines = cart.map((line, i) => {
+    const cake = findCake(line.id);
+    const weight = cake.fixed ? cake.fixed.weight : `${String(line.weight).replace(".", ",")} кг`;
+    const count = line.qty > 1 ? ` × ${line.qty}` : "";
+    return `${i + 1}) ${cake.name}, ${weight}${count} — ${money(lineTotal(line))}`;
+  });
+  return [
+    `Здравствуйте! Хочу заказать ${cartCount()} ${plural(cartCount(), "торт", "торта", "тортов")}.`,
+    ...lines,
+    `Дата: ${prettyDate($("#c-date").value)}`,
+    `Имя: ${$("#c-name").value.trim()}`,
+    `Итого: ${money(total)}`,
+    `Предоплата ${Math.round(CONFIG.prepay * 100)}%: ${money(total * CONFIG.prepay)}`
+  ].join("\n");
+}
+
+function updateCartLink() {
+  $("#cart-send").href = cartProblems().length
+    ? "#"
+    : `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(cartText())}`;
+}
+
+function setupCart() {
+  const date = $("#c-date");
+  date.min = dateFromToday(CONFIG.minDays);
+  date.value = date.min;
+  $("#c-date-hint").textContent = `Не раньше чем через ${CONFIG.minDays} дней`;
+
+  $("#cart-btn").addEventListener("click", (event) => openCart(event.currentTarget));
+  $("#cart-close").addEventListener("click", closeCart);
+  $("#cart-modal").addEventListener("click", (event) => {
+    if (event.target.id === "cart-modal") closeCart();
+  });
+
+  // Количество тортов в строке: − и +
+  $("#cart-list").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-step]");
+    if (!button) return;
+    const line = cart[Number(button.closest(".cart__item").dataset.index)];
+    line.qty += Number(button.dataset.step);
+    if (line.qty < 1) cart.splice(cart.indexOf(line), 1);
+    renderCartButton();
+    if (!cart.length) return closeCart(); // убрали последний торт — закрываем
+    renderCart();
+  });
+
+  $("#cart-clear").addEventListener("click", () => {
+    cart.length = 0;
+    renderCartButton();
+    closeCart();
+  });
+
+  $("#cart-form").addEventListener("input", (event) => {
+    event.target.classList.toggle("is-invalid", false);
+    $("#cart-error").hidden = true;
+    updateCartLink();
+  });
+  $("#cart-form").addEventListener("submit", (event) => event.preventDefault());
+
+  // Не хватает имени или даты — подсказываем, а не открываем пустой чат
+  $("#cart-send").addEventListener("click", (event) => {
+    const problems = cartProblems();
+    if (!problems.length) return;
+    event.preventDefault();
+    problems.forEach(([field]) => field.classList.add("is-invalid"));
+    $("#cart-error").textContent = problems.map(([, text]) => text).join(". ") + ".";
+    $("#cart-error").hidden = false;
+    problems[0][0].focus();
+  });
+
+  renderCartButton();
+}
+
 function setupOrder() {
   // Дата: не раньше чем через CONFIG.minDays дней
   const date = $("#o-date");
@@ -657,6 +814,17 @@ function setupOrder() {
     onCardWeightChange();
     if (!$("#pd").hidden) renderProductPrice();
     renderOrderPrice();
+  });
+
+  // «В корзину»: торт складывается, окно закрывается, значок в шапке подпрыгивает
+  $("#order-to-cart").addEventListener("click", () => {
+    const cake = findCake(orderNow.id);
+    addToCart(orderNow.id, orderWeight(cake));
+    closeOrder();
+    const button = $("#cart-btn");
+    button.classList.remove("is-pop");
+    void button.offsetWidth;
+    button.classList.add("is-pop");
   });
 
   $("#order-close").addEventListener("click", closeOrder);
@@ -971,6 +1139,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#head-call").href = `tel:${CONFIG.phone.replace(/[^\d+]/g, "")}`;
   $("#head-wa").href = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent("Здравствуйте! Хочу заказать торт.")}`;
   setupPriceFilter();
+  setupCart();
   setupOrder();
   // Телефон в подвале — тоже из data.js
   $("#footer-tel").textContent = CONFIG.phone;
@@ -1021,6 +1190,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
     if (!$("#lightbox").hidden) closeGallery();
+    else if (!$("#cart-modal").hidden) closeCart();
     else if (!$("#order-modal").hidden) closeOrder();
     else if (!$("#pd").hidden) closeProduct();
     else closeFilters();
