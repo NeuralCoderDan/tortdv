@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=14">
+  <link rel="stylesheet" href="style.css?v=15">
 </head>
 <body>
 
@@ -52,17 +52,33 @@
     <!-- Первый экран: фото торта на весь экран, заголовок и кнопка поверх -->
     <section class="hero">
       <div class="container hero__inner">
-        <h1 class="hero__title">Торты на заказ в Хабаровске</h1>
-        <p class="hero__lead">Выберите торт и нажмите «Заказать»</p>
+        <div class="hero__text">
+          <h1 class="hero__title">Торты на заказ в Хабаровске</h1>
+          <p class="hero__lead">Выберите торт и нажмите «Заказать»</p>
 
-        <div class="hero__row">
-          <a href="#cakes" class="btn btn--primary btn--lg">Выбрать торт</a>
-          <ul class="hero__facts">
-            <li><b>от 1,5 кг</b>вес торта</li>
-            <li><b>за 7 дней</b>принимаем заказ</li>
-            <li><b>50%</b>предоплата</li>
-          </ul>
+          <div class="hero__row">
+            <a href="#cakes" class="btn btn--primary btn--lg">Выбрать торт</a>
+            <ul class="hero__facts">
+              <li><b>от 1,5 кг</b>вес торта</li>
+              <li><b>за 7 дней</b>принимаем заказ</li>
+              <li><b>50%</b>предоплата</li>
+            </ul>
+          </div>
         </div>
+
+        <!-- Плавающий торт: покачивается и слегка поворачивается, тень под ним «дышит» -->
+        <div class="hero__cake" aria-hidden="true">
+          <img class="hero__cake-img" src="images/cake1.webp" alt="" width="778" height="786">
+          <span class="hero__cake-shadow"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Счётчики: цифры из data.js, досчитывают от нуля, когда секция появляется на экране -->
+    <section class="stats" id="stats" aria-label="О кондитерской в цифрах">
+      <div class="container">
+        <ul class="stats__list" id="stats-list"></ul>
+        <p class="stats__note" id="stats-note" hidden>Цифры для примера — заменим на настоящие</p>
       </div>
     </section>
 
@@ -231,6 +247,14 @@
       <!-- Фото, название и цена — только для чтения, подставляет script.js -->
       <div class="order__photo" id="order-photo"></div>
       <h2 class="modal__title" id="order-title">Заказ торта</h2>
+      <!-- Калькулятор порций: число гостей само выбирает вес -->
+      <div class="guests" id="order-guests">
+        <label class="guests__row">
+          <span class="guests__label">На сколько гостей?</span>
+          <input class="guests__input" type="number" id="o-guests" min="5" max="50" inputmode="numeric" placeholder="10">
+        </label>
+        <p class="guests__hint" id="o-guests-hint"></p>
+      </div>
       <div class="weights order__weights" id="order-weights" role="radiogroup" aria-label="Вес торта"></div>
       <p class="order__price" id="order-price"></p>
       <p class="order__prepay" id="order-prepay"></p>
@@ -356,7 +380,7 @@
   </div>
 
   <!-- Сначала данные, потом логика -->
-  <script src="data.js?v=14"></script>
-  <script src="script.js?v=14"></script>
+  <script src="data.js?v=15"></script>
+  <script src="script.js?v=15"></script>
 </body>
 </html>

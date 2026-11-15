@@ -548,10 +548,26 @@ function orderWeight(cake) {
   return cake.fixed ? null : chosenWeight[cake.id];
 }
 
+// Сколько порций в торте: считаем по 150 г на человека
+const portions = (kg) => Math.round(kg / 0.15);
+
+// Вес по числу гостей: 5–8 → 1,5 кг, 9–14 → 2 кг, 15–20 → 2,5 кг, 21 и больше → 3 кг
+function weightForGuests(guests) {
+  if (guests <= 8) return 1.5;
+  if (guests <= 14) return 2;
+  if (guests <= 20) return 2.5;
+  return 3;
+}
+
 // Цена и предоплата в окне — пересчитываются при смене веса
 function renderOrderPrice() {
   const cake = findCake(orderNow.id);
   const total = cakePrice(cake, orderWeight(cake));
+  if (!cake.fixed) {
+    const kg = chosenWeight[cake.id];
+    $("#o-guests-hint").textContent =
+      `${kilos(kg)} = примерно ${portions(kg)} ${plural(portions(kg), "порция", "порции", "порций")}`;
+  }
   $("#order-price").textContent = `Итого: ${money(total)}`;
   $("#order-prepay").textContent = `Предоплата ${Math.round(CONFIG.prepay * 100)}%: ${money(total * CONFIG.prepay)}`;
   $$("#order-weights .weight[data-kg]").forEach((button) => {
@@ -575,6 +591,9 @@ function openOrder(cakeId, opener) {
     : CONFIG.weights.map((kg) => `
         <button class="weight" type="button" role="radio" data-kg="${kg}">${kilos(kg)}</button>`).join("");
   $("#order-weights").setAttribute("role", cake.fixed ? "presentation" : "radiogroup");
+  // У бенто вес один — калькулятор порций не нужен
+  $("#order-guests").hidden = Boolean(cake.fixed);
+  $("#o-guests").value = "";
   renderOrderPrice();
   $("#order-error").hidden = true;
   $$("#order-form .is-invalid").forEach((field) => field.classList.toggle("is-invalid", false));
@@ -810,6 +829,17 @@ function setupOrder() {
     const button = event.target.closest(".weight[data-kg]");
     if (!button) return;
     chosenWeight[orderNow.id] = Number(button.dataset.kg);
+    updateCardPrice(orderNow.id);
+    onCardWeightChange();
+    if (!$("#pd").hidden) renderProductPrice();
+    renderOrderPrice();
+  });
+
+  // Число гостей само выбирает вес (5–50; меньше 5 — ждём, пока человек допечатает)
+  $("#o-guests").addEventListener("input", (event) => {
+    const guests = Math.min(50, Math.floor(Number(event.target.value)));
+    if (!guests || guests < 5) return;
+    chosenWeight[orderNow.id] = weightForGuests(guests);
     updateCardPrice(orderNow.id);
     onCardWeightChange();
     if (!$("#pd").hidden) renderProductPrice();
@@ -1105,6 +1135,50 @@ function setupGallery() {
 
 document.documentElement.classList.add("js");
 
+// Счётчики: когда секция входит в экран, цифры за 1,5 с досчитывают от нуля до значения
+function setupStats() {
+  const format = (value, decimals) => value.toFixed(decimals).replace(".", ",");
+  $("#stats-list").innerHTML = STATS.map((stat, i) => `
+    <li class="stats__item">
+      <span class="stats__icon" aria-hidden="true">${stat.icon}</span>
+      <b class="stats__value" data-stat="${i}">${format(0, stat.decimals)}</b>
+      <span class="stats__label">${stat.label}</span>
+    </li>`).join("");
+  $("#stats-note").hidden = !STATS_ARE_DEMO;
+
+  const numbers = $$("#stats-list [data-stat]");
+  const showFinal = () => numbers.forEach((el) => {
+    const stat = STATS[el.dataset.stat];
+    el.textContent = format(stat.value, stat.decimals);
+  });
+
+  // Анимации отключены или браузер старый — сразу итоговые цифры
+  if (reducedMotion.matches || !("IntersectionObserver" in window)) return showFinal();
+
+  const DURATION = 1500;
+  const run = () => {
+    const start = performance.now();
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / DURATION);
+      const eased = 1 - Math.pow(1 - t, 3); // к концу замедляется
+      numbers.forEach((el) => {
+        const stat = STATS[el.dataset.stat];
+        el.textContent = format(stat.value * eased, stat.decimals);
+      });
+      if (t < 1) requestAnimationFrame(tick);
+      else showFinal();
+    };
+    requestAnimationFrame(tick);
+  };
+
+  const observer = new IntersectionObserver(([entry]) => {
+    if (!entry.isIntersecting) return;
+    observer.disconnect(); // считаем один раз
+    run();
+  }, { threshold: 0.4 });
+  observer.observe($("#stats"));
+}
+
 // Секции появляются при прокрутке: изначально прозрачные и сдвинуты вниз (см. style.css),
 // когда секция входит в экран — получает класс is-visible и плавно приезжает на место
 function setupSectionReveal() {
@@ -1126,6 +1200,7 @@ function setupSectionReveal() {
 document.addEventListener("DOMContentLoaded", () => {
   renderFilters();
   renderCatalog();
+  setupStats();
   setupSectionReveal();
 
   // Высота шапки — в CSS: первый экран занимает всё окно под шапкой (см. .hero в style.css)
