@@ -237,41 +237,6 @@ textarea {
   color: var(--choco-soft);
 }
 
-/* Три торта в ряд — по нажатию открывается страница торта */
-.hero__photos {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 24px;
-}
-
-.hero__photo {
-  display: block;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-  text-align: left;
-  font: inherit;
-  color: inherit;
-}
-
-.hero__photo .media {
-  aspect-ratio: 1 / 1;
-  margin: 0;
-  border-radius: 12px;
-}
-
-.hero__photo span {
-  display: block;
-  margin-top: 6px;
-  overflow: hidden;
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
 /* ===== Секции ===== */
 .section {
   padding: 48px 0 56px;
@@ -1077,7 +1042,7 @@ textarea {
 .odo__strip {
   display: flex;
   flex-direction: column;
-  transition: transform 0.7s var(--smooth);
+  transition: transform 0.3s ease;
 }
 
 .odo__strip span {
@@ -1705,14 +1670,6 @@ textarea {
     font-size: 15px;
   }
 
-  .hero__photos {
-    gap: 16px;
-  }
-
-  .hero__photo span {
-    font-size: 15px;
-  }
-
   .footer__list {
     grid-template-columns: repeat(4, auto);
     justify-content: space-between;
@@ -2317,9 +2274,9 @@ main {
     transition: none !important;
   }
 
-  .js .reveal {
+  /* Секции видны сразу, без появления */
+  .js .section {
     opacity: 1;
-    filter: none;
     transform: none;
   }
 }
@@ -2500,10 +2457,6 @@ main {
 
 /* ===================== Живые фоны секций ===================== */
 /* Секции чередуются по цвету, чтобы страница не сливалась в один фон */
-.hero {
-  background: #ffffff;
-}
-
 #cakes {
   background: #fff0f5; /* каталог — светло-розовый */
 }
@@ -2793,4 +2746,112 @@ main {
   right: 12px;
   background: #fff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ===================== Визуальные эффекты ===================== */
+
+/* --- Первый экран: фото торта на всю высоту окна, поверх — тёмная вуаль и белый текст --- */
+.hero {
+  display: flex;
+  align-items: center;
+  /* Всё окно под шапкой: шапка + первый экран = ровно высота окна.
+     --header-h задаёт script.js; svh — видимая высота на телефоне без панелей браузера */
+  min-height: calc(100vh - var(--header-h, 0px));
+  min-height: calc(100svh - var(--header-h, 0px));
+  padding: 48px 0;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)),
+    #1b1420 url("images/cake1.webp") center / cover no-repeat;
+  color: #fff;
+}
+
+.hero__inner {
+  width: 100%;
+}
+
+.hero__title {
+  max-width: 14em;
+  margin-bottom: 14px;
+  font-size: clamp(2rem, 5vw, 4rem);
+  color: #fff;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.45);
+}
+
+.hero__lead {
+  margin-bottom: 26px;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45);
+}
+
+.hero__facts li {
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+}
+
+.hero__facts b {
+  color: #fff;
+}
+
+/* Параллакс: на компьютере фото стоит на месте, страница едет поверх.
+   На телефонах отключён — там background-attachment: fixed работает с рывками */
+@media (min-width: 1000px) and (hover: hover) {
+  .hero {
+    background-attachment: scroll, fixed;
+  }
+}
+
+/* --- Секции появляются при прокрутке (класс is-visible ставит script.js) --- */
+.js .section {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+/* transform: none, а не translateY(0): иначе на телефоне сломается выезжающая панель фильтров */
+.js .section.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* --- 3D-наклон карточки за курсором (угол задаёт script.js) --- */
+.card {
+  transform-origin: center;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  /* Пока курсор на карточке — она быстро следует за мышью; уходит — плавно возвращается */
+  .card:hover {
+    transition: transform 0.12s ease-out, box-shadow 0.5s var(--smooth), opacity 0.35s var(--smooth);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js .section {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Телефон: текст первого экрана прижат к низу, чтобы не ложиться на табличку на торте */
+@media (max-width: 639px) {
+  .hero {
+    align-items: flex-end;
+    padding-bottom: 40px;
+    /* Снизу, под текстом, вуаль плотнее: там светлая салфетка, белые подписи на ней не читались */
+    background:
+      linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0) 60%),
+      linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)),
+      #1b1420 url("images/cake1.webp") center / cover no-repeat;
+  }
+}
+
+/* Примерная высота шапки до того, как script.js измерит точную, — чтобы первый экран не прыгал при загрузке */
+:root {
+  --header-h: 109px;
+}
+
+@media (min-width: 1000px) {
+  :root {
+    --header-h: 77px;
+  }
 }

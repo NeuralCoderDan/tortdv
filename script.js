@@ -180,6 +180,25 @@ function renderCatalog() {
     });
   });
 
+  // 3D-наклон: карточка поворачивается за курсором, максимум на 8° в каждую сторону.
+  // На телефонах и планшетах (нет мыши) и при отключённых анимациях эффект не работает
+  const canTilt = window.matchMedia("(hover: hover) and (pointer: fine)");
+  $$("#catalog .card").forEach((card) => {
+    card.addEventListener("mousemove", (event) => {
+      if (!canTilt.matches || reducedMotion.matches) return;
+      const rect = card.getBoundingClientRect();
+      const x = (event.clientX - rect.left) / rect.width - 0.5;  // −0.5 слева … 0.5 справа
+      const y = (event.clientY - rect.top) / rect.height - 0.5;  // −0.5 сверху … 0.5 снизу
+      const rx = Math.max(-8, Math.min(8, -y * 16));
+      const ry = Math.max(-8, Math.min(8, x * 16));
+      card.style.transform =
+        `perspective(1000px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) scale(1.02)`;
+    });
+    card.addEventListener("mouseleave", () => {
+      card.style.transform = ""; // плавно возвращается на место
+    });
+  });
+
   CAKES.forEach((cake) => updateCardPrice(cake.id));
 }
 
@@ -239,9 +258,14 @@ async function applyFilters() {
   cards.forEach((card) => (card.hidden = !show.includes(card)));
   leaving.forEach((card) => card.classList.remove("is-out"));
 
-  // Переставляем карточки в нужном порядке — FLIP доведёт их до новых мест плавно
+  // Переставляем карточки в нужном порядке — FLIP доведёт их до новых мест плавно.
+  // Трогаем только те, что стоят не на своём месте: если перевставить карточку в страницу,
+  // браузер оборвёт её анимации (цифры цены перескочат без прокрутки)
   const catalog = $("#catalog");
-  sortedCakeIds().forEach((id) => catalog.appendChild($(`.card[data-id="${id}"]`)));
+  sortedCakeIds().forEach((id, i) => {
+    const card = $(`.card[data-id="${id}"]`);
+    if (catalog.children[i] !== card) catalog.insertBefore(card, catalog.children[i] || null);
+  });
 
   if (animate) {
     before.forEach((rect, card) => {
@@ -640,13 +664,21 @@ function setupOrder() {
     $("#cakes").scrollIntoView({ behavior: reducedMotion.matches ? "auto" : "smooth" });
   });
 
-  // Пока торты на экране, липкая кнопка прячется: иначе она закрывает
-  // кнопку «Заказать» на карточке внизу экрана и нажатие уходит не туда
+  // Липкая кнопка прячется, пока на экране торты (иначе она закрывает кнопку «Заказать»
+  // на карточке внизу экрана) или первый экран (там уже есть своя кнопка «Выбрать торт»)
   if ("IntersectionObserver" in window) {
-    new IntersectionObserver(([entry]) => {
-      bar.classList.toggle("is-hidden", entry.isIntersecting);
-      bar.tabIndex = entry.isIntersecting ? -1 : 0;
-    }).observe($("#cakes"));
+    const onScreen = new Set();
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) onScreen.add(entry.target);
+        else onScreen.delete(entry.target);
+      });
+      bar.classList.toggle("is-hidden", onScreen.size > 0);
+      bar.tabIndex = onScreen.size > 0 ? -1 : 0;
+    });
+    [$("#cakes"), $(".hero")].forEach((block) => observer.observe(block));
+  } else {
+    bar.classList.remove("is-hidden"); // старый браузер: кнопка просто видна всегда
   }
 }
 
@@ -899,18 +931,35 @@ function setupGallery() {
 
 document.documentElement.classList.add("js");
 
+// Секции появляются при прокрутке: изначально прозрачные и сдвинуты вниз (см. style.css),
+// когда секция входит в экран — получает класс is-visible и плавно приезжает на место
+function setupSectionReveal() {
+  const sections = $$(".section");
+  if (!("IntersectionObserver" in window)) {
+    sections.forEach((section) => section.classList.add("is-visible"));
+    return;
+  }
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add("is-visible");
+      observer.unobserve(entry.target); // появляется один раз
+    });
+  }, { rootMargin: "0px 0px -10% 0px" });
+  sections.forEach((section) => observer.observe(section));
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   renderFilters();
   renderCatalog();
-  $("#hero-photos").innerHTML = CAKES.slice(0, 3).map((cake) => `
-    <button class="hero__photo" type="button" data-cake="${cake.id}">
-      ${mediaHTML(cake, false)}
-      <span>${cake.name}</span>
-    </button>`).join("");
-  $("#hero-photos").addEventListener("click", (event) => {
-    const button = event.target.closest("[data-cake]");
-    if (button) openProduct(button.dataset.cake, button);
-  });
+  setupSectionReveal();
+
+  // Высота шапки — в CSS: первый экран занимает всё окно под шапкой (см. .hero в style.css)
+  const setHeaderHeight = () => {
+    document.documentElement.style.setProperty("--header-h", `${$(".header").offsetHeight}px`);
+  };
+  setHeaderHeight();
+  window.addEventListener("resize", setHeaderHeight);
 
   // Шапка: «Позвонить» и «WhatsApp» — номера из data.js
   $("#head-call").href = `tel:${CONFIG.phone.replace(/[^\d+]/g, "")}`;

@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=11">
+  <link rel="stylesheet" href="style.css?v=12">
 </head>
 <body>
 
@@ -43,10 +43,10 @@
   </header>
 
   <main>
-    <!-- Первый экран: заголовок, условия и три торта в ряд -->
+    <!-- Первый экран: фото торта на весь экран, заголовок и кнопка поверх -->
     <section class="hero">
-      <div class="container">
-        <h1 class="hero__title">Торт на заказ в Хабаровске</h1>
+      <div class="container hero__inner">
+        <h1 class="hero__title">Торты на заказ в Хабаровске</h1>
         <p class="hero__lead">Выберите торт и нажмите «Заказать»</p>
 
         <div class="hero__row">
@@ -57,8 +57,6 @@
             <li><b>50%</b>предоплата</li>
           </ul>
         </div>
-        <!-- Фото тортов в ряд: вставляет script.js -->
-        <div class="hero__photos" id="hero-photos"></div>
       </div>
     </section>
 
@@ -212,8 +210,9 @@
     </div>
   </footer>
 
-  <!-- Липкая кнопка на телефоне: «Заказать торт» — прокрутка к тортам -->
-  <button class="order-bar" id="order-bar" type="button">
+  <!-- Липкая кнопка на телефоне: «Заказать торт» — прокрутка к тортам.
+       Сначала спрятана: script.js показывает её, когда первый экран и торты уходят с экрана -->
+  <button class="order-bar is-hidden" id="order-bar" type="button">
     <span id="order-bar-text">Заказать торт</span>
   </button>
 
@@ -319,7 +318,7 @@
   </div>
 
   <!-- Сначала данные, потом логика -->
-  <script src="data.js?v=11"></script>
-  <script src="script.js?v=11"></script>
+  <script src="data.js?v=12"></script>
+  <script src="script.js?v=12"></script>
 </body>
 </html>
