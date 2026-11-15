@@ -176,6 +176,7 @@ function renderCatalog() {
   $$("#catalog [data-order]").forEach((button) => {
     button.addEventListener("click", (event) => {
       event.stopPropagation(); // нажатие на кнопку не открывает страницу торта
+      console.log("order click", button.dataset.order); // отладка: видно в консоли браузера
       openOrder(button.dataset.order, button);
     });
   });
@@ -186,6 +187,11 @@ function renderCatalog() {
   $$("#catalog .card").forEach((card) => {
     card.addEventListener("mousemove", (event) => {
       if (!canTilt.matches || reducedMotion.matches) return;
+      // Над кнопкой «Заказать» карточку не наклоняем: иначе кнопка уезжает из-под курсора
+      if (event.target.closest("[data-order]")) {
+        card.style.transform = "";
+        return;
+      }
       const rect = card.getBoundingClientRect();
       const x = (event.clientX - rect.left) / rect.width - 0.5;  // −0.5 слева … 0.5 справа
       const y = (event.clientY - rect.top) / rect.height - 0.5;  // −0.5 сверху … 0.5 снизу
