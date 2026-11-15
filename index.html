@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=15">
+  <link rel="stylesheet" href="style.css?v=16">
 </head>
 <body>
 
@@ -278,6 +278,44 @@
     </div>
   </div>
 
+  <!-- Оценка торта: 10 кружков, имя и комментарий — всё необязательное, кроме оценки -->
+  <div class="modal order" id="rate-modal" role="dialog" aria-modal="true" aria-labelledby="rate-title" hidden>
+    <div class="modal__card order__card">
+      <button class="icon-btn modal__close" id="rate-close" type="button" aria-label="Закрыть">×</button>
+      <h2 class="modal__title" id="rate-title">Оцените торт</h2>
+      <p class="rate__cake" id="rate-cake"></p>
+
+      <!-- Кружки 1–10 рисует script.js -->
+      <div class="rate__dots" id="rate-dots" role="radiogroup" aria-label="Оценка от 1 до 10"></div>
+
+      <!-- Последние три комментария, если они есть -->
+      <div class="rate__comments" id="rate-comments" hidden>
+        <p class="rate__comments-title">Что пишут</p>
+        <ul class="rate__comments-list" id="rate-comments-list"></ul>
+      </div>
+
+      <form class="form order__form" id="rate-form" novalidate>
+        <label class="field">
+          <span class="field__label">Ваше имя <i>(необязательно)</i></span>
+          <input type="text" id="r-name" autocomplete="name" maxlength="60">
+        </label>
+        <label class="field">
+          <span class="field__label">Комментарий <i>(необязательно)</i></span>
+          <textarea id="r-text" rows="3" maxlength="500" placeholder="Всё понравилось!"></textarea>
+        </label>
+        <p class="form-error" id="rate-error" role="alert" hidden></p>
+        <button class="btn btn--primary btn--lg order__send" id="rate-send" type="button">Отправить оценку</button>
+        <p class="rate__note" id="rate-note" hidden></p>
+      </form>
+
+      <!-- Появляется поверх окна после отправки -->
+      <div class="rate__thanks" id="rate-thanks" hidden>
+        <span class="rate__check" aria-hidden="true">✅</span>
+        <b>Спасибо за оценку!</b>
+      </div>
+    </div>
+  </div>
+
   <!-- Корзина: список тортов, имя и дата один раз, одно сообщение в WhatsApp -->
   <div class="modal order" id="cart-modal" role="dialog" aria-modal="true" aria-labelledby="cart-title" hidden>
     <div class="modal__card order__card">
@@ -380,7 +418,7 @@
   </div>
 
   <!-- Сначала данные, потом логика -->
-  <script src="data.js?v=15"></script>
-  <script src="script.js?v=15"></script>
+  <script src="data.js?v=16"></script>
+  <script src="script.js?v=16"></script>
 </body>
 </html>

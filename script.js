@@ -166,6 +166,14 @@ function renderCatalog() {
         <h3 class="card__name" title="${cake.name}"><span>${cake.name}</span></h3>
         <p class="card__desc">${cake.desc}</p>
         <div class="card__foot">
+          <p class="card__rate">
+            <button class="rate-chip" type="button" data-rate="${cake.id}">
+              <span aria-hidden="true">⭐</span><b class="rate-chip__score"></b>
+            </button>
+            <button class="rate-chip" type="button" data-rate="${cake.id}">
+              <span aria-hidden="true">💬</span><b class="rate-chip__count"></b>
+            </button>
+          </p>
           <p class="card__cost"><span class="card__price"></span><span class="card__per"></span></p>
           <button class="btn btn--primary" type="button" data-order="${cake.id}">Заказать</button>
         </div>
@@ -181,14 +189,22 @@ function renderCatalog() {
     });
   });
 
+  // ⭐ и 💬 на карточке открывают окно оценки
+  $$("#catalog [data-rate]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation(); // не открываем заодно страницу торта
+      openRate(button.dataset.rate, button);
+    });
+  });
+
   // 3D-наклон: карточка поворачивается за курсором, максимум на 8° в каждую сторону.
   // На телефонах и планшетах (нет мыши) и при отключённых анимациях эффект не работает
   const canTilt = window.matchMedia("(hover: hover) and (pointer: fine)");
   $$("#catalog .card").forEach((card) => {
     card.addEventListener("mousemove", (event) => {
       if (!canTilt.matches || reducedMotion.matches) return;
-      // Над кнопкой «Заказать» карточку не наклоняем: иначе кнопка уезжает из-под курсора
-      if (event.target.closest("[data-order]")) {
+      // Над кнопками карточку не наклоняем: иначе кнопка уезжает из-под курсора
+      if (event.target.closest("[data-order], [data-rate]")) {
         card.style.transform = "";
         return;
       }
@@ -205,7 +221,10 @@ function renderCatalog() {
     });
   });
 
-  CAKES.forEach((cake) => updateCardPrice(cake.id));
+  CAKES.forEach((cake) => {
+    updateCardPrice(cake.id);
+    renderCardRating(cake.id);
+  });
 }
 
 function updateCardPrice(id) {
@@ -537,6 +556,155 @@ function closeFilters() {
   if (!document.body.classList.contains("filters-open")) return;
   document.body.classList.remove("filters-open", "no-scroll");
   $("#filter-open").focus({ preventScroll: true });
+}
+
+/* ===================== Оценки и комментарии ===================== */
+
+// Оценки лежат в этом браузере: { cake1: [{ score, name, text, at }], ... }
+const RATINGS_KEY = "tortdv-ratings";
+
+function loadRatings() {
+  try {
+    return JSON.parse(localStorage.getItem(RATINGS_KEY)) || {};
+  } catch {
+    return {}; // в приватном режиме хранилище может быть недоступно
+  }
+}
+
+function saveRatings(all) {
+  try {
+    localStorage.setItem(RATINGS_KEY, JSON.stringify(all));
+  } catch {
+    /* не сохранилось — не страшно, оценка просто не переживёт перезагрузку */
+  }
+}
+
+const myRatings = (cakeId) => loadRatings()[cakeId] || [];
+
+// Средняя оценка = стартовые цифры из data.js плюс голоса из этого браузера
+function cakeScore(cake) {
+  const mine = myRatings(cake.id);
+  const count = (cake.ratingsCount || 0) + mine.length;
+  if (!count) return { average: null, count: 0 };
+  const sum = (cake.rating || 0) * (cake.ratingsCount || 0)
+    + mine.reduce((total, vote) => total + vote.score, 0);
+  return { average: sum / count, count };
+}
+
+function renderCardRating(id) {
+  const card = $(`.card[data-id="${id}"]`);
+  if (!card) return;
+  const { average, count } = cakeScore(findCake(id));
+  $(".rate-chip__score", card).textContent = average === null ? "—" : average.toFixed(1).replace(".", ",");
+  $(".rate-chip__count", card).textContent = count;
+  $$("[data-rate]", card).forEach((button) => {
+    button.setAttribute("aria-label", count
+      ? `Оценка ${average.toFixed(1).replace(".", ",")} из 10, ${count} ${plural(count, "оценка", "оценки", "оценок")}. Оценить торт`
+      : "Оценить торт");
+  });
+}
+
+// Что сейчас в окне оценки
+const rateNow = { id: null, score: 0, opener: null };
+
+function renderRateDots() {
+  $$("#rate-dots [data-score]").forEach((dot) => {
+    dot.setAttribute("aria-checked", String(Number(dot.dataset.score) === rateNow.score));
+  });
+}
+
+// Последние три комментария. Текст ставим через textContent — чужая разметка не выполнится
+function renderRateComments() {
+  const withText = myRatings(rateNow.id).filter((vote) => vote.text).slice(-3).reverse();
+  $("#rate-comments").hidden = withText.length === 0;
+  const list = $("#rate-comments-list");
+  list.innerHTML = withText.map(() => `
+    <li class="rate__comment">
+      <b class="rate__comment-head"></b>
+      <span class="rate__comment-text"></span>
+    </li>`).join("");
+  $$("#rate-comments-list .rate__comment").forEach((item, i) => {
+    const vote = withText[i];
+    $(".rate__comment-head", item).textContent = `${vote.name || "Гость"} · ${vote.score}/10`;
+    $(".rate__comment-text", item).textContent = vote.text;
+  });
+}
+
+function openRate(cakeId, opener) {
+  const cake = findCake(cakeId);
+  rateNow.id = cakeId;
+  rateNow.score = 0;
+  rateNow.opener = opener;
+
+  $("#rate-cake").textContent = cake.name;
+  $("#rate-dots").innerHTML = Array.from({ length: 10 }, (_, i) => `
+    <button class="rate-dot" type="button" role="radio" data-score="${i + 1}"
+            aria-checked="false" aria-label="Оценка ${i + 1} из 10">${i + 1}</button>`).join("");
+  renderRateDots();
+  renderRateComments();
+
+  // Честная подпись: оценки никуда не уходят и стартовые цифры придуманы
+  const note = $("#rate-note");
+  note.hidden = !RATINGS_ARE_DEMO;
+  if (RATINGS_ARE_DEMO) {
+    note.textContent = "Оценка сохранится только в этом браузере и к кондитеру не попадёт. "
+      + "Нынешние цифры — для примера.";
+  }
+
+  $("#rate-error").hidden = true;
+  $("#rate-thanks").hidden = true;
+  $("#rate-form").hidden = false;
+  $("#rate-modal").hidden = false;
+  document.body.classList.add("no-scroll");
+  $("#rate-close").focus({ preventScroll: true });
+}
+
+function closeRate() {
+  $("#rate-modal").hidden = true;
+  if ($("#pd").hidden && $("#order-modal").hidden && $("#cart-modal").hidden) {
+    document.body.classList.toggle("no-scroll", false);
+  }
+  rateNow.opener?.focus({ preventScroll: true });
+}
+
+function sendRating() {
+  if (!rateNow.score) {
+    $("#rate-error").textContent = "Поставьте оценку от 1 до 10.";
+    $("#rate-error").hidden = false;
+    return;
+  }
+  const all = loadRatings();
+  all[rateNow.id] = [...(all[rateNow.id] || []), {
+    score: rateNow.score,
+    name: $("#r-name").value.trim(),
+    text: $("#r-text").value.trim(),
+    at: new Date().toISOString()
+  }];
+  saveRatings(all);
+  renderCardRating(rateNow.id);
+
+  // Галочка «Спасибо», и через мгновение окно закрывается
+  $("#rate-form").hidden = true;
+  $("#rate-thanks").hidden = false;
+  $("#r-name").value = "";
+  $("#r-text").value = "";
+  setTimeout(closeRate, 1400);
+}
+
+function setupRate() {
+  $("#rate-dots").addEventListener("click", (event) => {
+    const dot = event.target.closest("[data-score]");
+    if (!dot) return;
+    rateNow.score = Number(dot.dataset.score);
+    renderRateDots();
+    $("#rate-error").hidden = true;
+  });
+  $("#rate-send").addEventListener("click", sendRating);
+  $("#rate-form").addEventListener("submit", (event) => event.preventDefault());
+  $("#rate-close").addEventListener("click", closeRate);
+  $("#rate-modal").addEventListener("click", (event) => {
+    if (event.target.id === "rate-modal") closeRate();
+  });
 }
 
 /* ===================== Заказ: окно с формой → WhatsApp ===================== */
@@ -1215,6 +1383,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#head-wa").href = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent("Здравствуйте! Хочу заказать торт.")}`;
   setupPriceFilter();
   setupCart();
+  setupRate();
   setupOrder();
   // Телефон в подвале — тоже из data.js
   $("#footer-tel").textContent = CONFIG.phone;
@@ -1265,6 +1434,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
     if (!$("#lightbox").hidden) closeGallery();
+    else if (!$("#rate-modal").hidden) closeRate();
     else if (!$("#cart-modal").hidden) closeCart();
     else if (!$("#order-modal").hidden) closeOrder();
     else if (!$("#pd").hidden) closeProduct();

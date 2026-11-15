@@ -3168,3 +3168,169 @@ main {
   font-size: 13px;
   color: #888;
 }
+
+/* ===================== Оценки на карточке ===================== */
+.card__rate {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 10px;
+}
+
+.rate-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  font-family: var(--text);
+  font-size: 13px;
+  color: var(--choco);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.rate-chip b {
+  font-weight: 700;
+}
+
+@media (hover: hover) {
+  .rate-chip:hover {
+    border-color: #e0006a;
+    background: #fff0f5;
+  }
+}
+
+.rate-chip:active {
+  transform: scale(0.96);
+}
+
+/* ===================== Окно «Оцените торт» ===================== */
+.rate__cake {
+  margin: 0 0 14px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #888;
+}
+
+/* Десять кружков 1–10 */
+.rate__dots {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.rate-dot {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1 / 1;
+  min-height: 44px;
+  padding: 0;
+  border: 1.5px solid var(--line);
+  border-radius: 50%;
+  background: var(--paper);
+  font-family: var(--text);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--choco);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s, transform 0.2s;
+}
+
+@media (hover: hover) {
+  .rate-dot:hover {
+    border-color: #e0006a;
+    background: #fff0f5;
+    color: #e0006a;
+  }
+}
+
+.rate-dot:active {
+  transform: scale(0.92);
+}
+
+/* Выбранная оценка остаётся закрашенной */
+.rate-dot[aria-checked="true"] {
+  border-color: #e0006a;
+  background: #e0006a;
+  color: #fff;
+}
+
+.rate-dot:focus-visible {
+  outline: 2px solid var(--plum);
+  outline-offset: 2px;
+}
+
+/* Последние комментарии */
+.rate__comments {
+  margin-bottom: 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fff0f5;
+}
+
+.rate__comments-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--plum);
+}
+
+.rate__comments-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rate__comment-head {
+  display: block;
+  font-size: 13px;
+}
+
+.rate__comment-text {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--choco-soft);
+}
+
+.rate__note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #aaa;
+}
+
+/* «Спасибо за оценку!» вместо формы */
+.rate__thanks {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 28px 0 12px;
+  text-align: center;
+  animation: thanks-in 0.45s var(--spring);
+}
+
+.rate__thanks b {
+  font-family: var(--display);
+  font-size: 22px;
+  color: var(--plum);
+}
+
+.rate__check {
+  font-size: 46px;
+  line-height: 1;
+}
+
+@keyframes thanks-in {
+  from { opacity: 0; transform: scale(0.8); }
+}
