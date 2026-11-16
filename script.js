@@ -1303,50 +1303,6 @@ function setupGallery() {
 
 document.documentElement.classList.add("js");
 
-// Счётчики: когда секция входит в экран, цифры за 1,5 с досчитывают от нуля до значения
-function setupStats() {
-  const format = (value, decimals) => value.toFixed(decimals).replace(".", ",");
-  $("#stats-list").innerHTML = STATS.map((stat, i) => `
-    <li class="stats__item">
-      <span class="stats__icon" aria-hidden="true">${stat.icon}</span>
-      <b class="stats__value" data-stat="${i}">${format(0, stat.decimals)}</b>
-      <span class="stats__label">${stat.label}</span>
-    </li>`).join("");
-  $("#stats-note").hidden = !STATS_ARE_DEMO;
-
-  const numbers = $$("#stats-list [data-stat]");
-  const showFinal = () => numbers.forEach((el) => {
-    const stat = STATS[el.dataset.stat];
-    el.textContent = format(stat.value, stat.decimals);
-  });
-
-  // Анимации отключены или браузер старый — сразу итоговые цифры
-  if (reducedMotion.matches || !("IntersectionObserver" in window)) return showFinal();
-
-  const DURATION = 1500;
-  const run = () => {
-    const start = performance.now();
-    const tick = (now) => {
-      const t = Math.min(1, (now - start) / DURATION);
-      const eased = 1 - Math.pow(1 - t, 3); // к концу замедляется
-      numbers.forEach((el) => {
-        const stat = STATS[el.dataset.stat];
-        el.textContent = format(stat.value * eased, stat.decimals);
-      });
-      if (t < 1) requestAnimationFrame(tick);
-      else showFinal();
-    };
-    requestAnimationFrame(tick);
-  };
-
-  const observer = new IntersectionObserver(([entry]) => {
-    if (!entry.isIntersecting) return;
-    observer.disconnect(); // считаем один раз
-    run();
-  }, { threshold: 0.4 });
-  observer.observe($("#stats"));
-}
-
 // Секции появляются при прокрутке: изначально прозрачные и сдвинуты вниз (см. style.css),
 // когда секция входит в экран — получает класс is-visible и плавно приезжает на место
 function setupSectionReveal() {
@@ -1368,7 +1324,6 @@ function setupSectionReveal() {
 document.addEventListener("DOMContentLoaded", () => {
   renderFilters();
   renderCatalog();
-  setupStats();
   setupSectionReveal();
 
   // Высота шапки — в CSS: первый экран занимает всё окно под шапкой (см. .hero в style.css)
