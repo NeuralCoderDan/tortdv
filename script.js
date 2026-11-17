@@ -1422,26 +1422,6 @@ function setupGallery() {
   });
 }
 
-/* ===================== Наши работы ===================== */
-
-// Фото с подписью и кнопкой «Хочу такой»: WhatsApp откроется с названием торта
-function renderWorks() {
-  $("#works-list").innerHTML = WORKS.map((work) => {
-    const text = `Здравствуйте! Хочу торт как на фото: ${work.title}. Можно обсудить?`;
-    const link = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(text)}`;
-    return `
-      <figure class="work">
-        <img class="work__photo" src="${escapeHtml(work.photo)}" alt="${escapeHtml(work.alt)}"
-             width="600" height="600" loading="lazy"
-             onerror="this.replaceWith(Object.assign(document.createElement('div'), { className: 'work__photo work__photo--soon', textContent: 'Фото скоро будет' }))">
-        <figcaption class="work__body">
-          <span class="work__title">${escapeHtml(work.title)}</span>
-          <a class="btn btn--primary work__btn" href="${escapeHtml(link)}" target="_blank" rel="noopener">Хочу такой</a>
-        </figcaption>
-      </figure>`;
-  }).join("");
-}
-
 /* ===================== Колонки каталога на телефоне ===================== */
 
 // 2, 3 или 4 карточки в ряд. На компьютере не действует — там свой ряд из трёх
@@ -1544,7 +1524,6 @@ document.addEventListener("DOMContentLoaded", () => {
   renderFilters();
   renderCatalog();
   setupCols();
-  renderWorks();
   setupSectionReveal();
 
   // Высота шапки — в CSS: первый экран занимает всё окно под шапкой (см. .hero в style.css)
