@@ -3295,3 +3295,63 @@ main {
   transform: translateY(16px) scale(0.97);
   transition: transform 0.28s ease;
 }
+
+/* ===================== Контакты: часы работы и мессенджеры ===================== */
+.hours {
+  display: block;
+  font-weight: 600;
+}
+
+/* «Сейчас работаем» — зелёная точка, «Откроемся…» — серая */
+.open-now {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 4px;
+  font-size: 14px;
+  font-style: normal;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.open-now__dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #b9b3bb;
+}
+
+/* Текст отметки — обычный, а не мелкая заглавная подпись, как «Телефон» и «Почта» */
+.footer__list .open-now span {
+  display: inline;
+  font-size: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  color: inherit;
+}
+
+.open-now.is-open {
+  color: #fff;
+}
+
+.open-now.is-open .open-now__dot {
+  background: #2fd27a;
+  box-shadow: 0 0 0 3px rgba(47, 210, 122, 0.3);
+}
+
+/* WhatsApp и Telegram рядом; на узком телефоне — друг под другом */
+.footer__messengers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 26px;
+}
+
+.footer__messengers .btn--wa {
+  margin-top: 0;
+}
+
+.footer .btn--tg {
+  background: #fff;
+  color: #229ed9; /* фирменный голубой Telegram */
+}

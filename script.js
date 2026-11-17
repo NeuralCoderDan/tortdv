@@ -1422,6 +1422,36 @@ function setupGallery() {
   });
 }
 
+/* ===================== Часы работы ===================== */
+
+// Время в Хабаровске, а не у посетителя: из Москвы в 15:00 у нас уже 22:00
+function bakeryNow() {
+  const shifted = new Date(Date.now() + CONFIG.utcOffset * 3600 * 1000);
+  return { hour: shifted.getUTCHours(), minute: shifted.getUTCMinutes() };
+}
+
+// Работаем сейчас? Если нет — когда откроемся: сегодня (до 9:00) или завтра (после 21:00)
+function openStatus() {
+  const { hour, minute } = bakeryNow();
+  const now = hour + minute / 60;
+  const { open, close } = CONFIG.hours;
+  if (now >= open && now < close) return { open: true, text: "Сейчас работаем" };
+  const when = now < open ? "сегодня" : "завтра";
+  return { open: false, text: `Откроемся ${when} в ${open}:00` };
+}
+
+function renderOpenStatus() {
+  const status = openStatus();
+  $("#open-now").classList.toggle("is-open", status.open);
+  $("#open-now-text").textContent = status.text;
+}
+
+function setupHours() {
+  $("#footer-hours").textContent = CONFIG.hours.label;
+  renderOpenStatus();
+  setInterval(renderOpenStatus, 60 * 1000); // раз в минуту: страница может быть открыта долго
+}
+
 /* ===================== Запуск ===================== */
 
 document.documentElement.classList.add("js");
@@ -1467,6 +1497,9 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#footer-tel").textContent = CONFIG.phone;
   $("#footer-tel").href = `tel:${CONFIG.phone.replace(/[^\d+]/g, "")}`;
   $("#footer-wa").href = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent("Здравствуйте! Хочу заказать торт.")}`;
+  // Telegram: имя или номер из data.js (номер — с «+», имя — без «@»)
+  $("#footer-tg").href = `https://t.me/${CONFIG.telegram.replace(/^@/, "")}`;
+  setupHours();
   setupGallery();
   setupProduct();
 
