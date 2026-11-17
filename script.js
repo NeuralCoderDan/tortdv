@@ -277,6 +277,36 @@ function renderCatalog() {
     card.addEventListener("mouseleave", () => {
       card.style.transform = ""; // плавно возвращается на место
     });
+
+    // Телефон: карточка наклоняется в сторону пальца, отпустили — плавно возвращается.
+    // На кнопках не наклоняем: кнопка не должна уезжать из-под пальца.
+    // Палец поехал (человек листает страницу) — сразу возвращаем, это не нажатие
+    let touchStart = null;
+    const release = () => {
+      touchStart = null;
+      card.style.transition = "transform 0.4s ease";
+      card.style.transform = "";
+    };
+    card.addEventListener("touchstart", (event) => {
+      if (!isTouchFx() || event.touches.length > 1) return;
+      if (event.target.closest("[data-order], [data-rate]")) return;
+      const touch = event.touches[0];
+      const rect = card.getBoundingClientRect();
+      const x = (touch.clientX - rect.left) / rect.width - 0.5;  // −0.5 … 0.5
+      const y = (touch.clientY - rect.top) / rect.height - 0.5;
+      const rx = Math.max(-8, Math.min(8, -y * 16));
+      const ry = Math.max(-8, Math.min(8, x * 16));
+      touchStart = { x: touch.clientX, y: touch.clientY };
+      card.style.transition = "transform 0.15s ease-out";
+      card.style.transform = `perspective(1000px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`;
+    }, { passive: true });
+    card.addEventListener("touchmove", (event) => {
+      if (!touchStart) return;
+      const touch = event.touches[0];
+      if (Math.hypot(touch.clientX - touchStart.x, touch.clientY - touchStart.y) > 10) release();
+    }, { passive: true });
+    card.addEventListener("touchend", () => touchStart && release(), { passive: true });
+    card.addEventListener("touchcancel", () => touchStart && release(), { passive: true });
   });
 
   CAKES.forEach((cake) => {
@@ -1422,6 +1452,56 @@ function setupGallery() {
   });
 }
 
+/* ===================== Эффекты для телефонов ===================== */
+
+// Телефон или планшет с пальцем вместо мыши, и анимации в системе не отключены.
+// На компьютере все три эффекта ниже не работают
+const touchQuery = window.matchMedia("(hover: none) and (pointer: coarse)");
+const isTouchFx = () => touchQuery.matches && !reducedMotion.matches;
+
+// 2. Параллакс первого экрана: размытый фон едет медленнее страницы (30% скорости).
+// Двигаем через transform — на телефоне это плавнее, чем background-position
+function setupHeroParallax() {
+  const hero = $(".hero");
+  const narrow = window.matchMedia("(max-width: 768px)");
+  let queued = false;
+  const update = () => {
+    queued = false;
+    const on = narrow.matches && !reducedMotion.matches;
+    // Ниже первого экрана фон уже не видно — не тратим силы
+    const shift = on ? Math.min(window.scrollY, hero.offsetHeight) * 0.3 : 0;
+    hero.style.setProperty("--hero-shift", `${shift.toFixed(1)}px`);
+  };
+  window.addEventListener("scroll", () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(update); // не чаще одного раза за кадр
+  }, { passive: true });
+  window.addEventListener("resize", update);
+  update();
+}
+
+// 3. Карточки вплывают: снизу, из прозрачности и с наклоном 6°, по очереди
+function setupCardArrival() {
+  if (!isTouchFx() || !("IntersectionObserver" in window)) return;
+  const cards = $$("#catalog .card");
+  cards.forEach((card) => card.classList.add("is-pending"));
+  const observer = new IntersectionObserver((entries) => {
+    entries.filter((entry) => entry.isIntersecting).forEach((entry, i) => {
+      const card = entry.target;
+      observer.unobserve(card);
+      card.style.transitionDelay = `${i * 80}ms`; // появившиеся вместе — лесенкой
+      card.classList.add("is-arriving");
+      card.classList.remove("is-pending");
+      card.addEventListener("transitionend", () => {
+        card.classList.remove("is-arriving");
+        card.style.transitionDelay = "";
+      }, { once: true });
+    });
+  }, { threshold: 0.15 });
+  cards.forEach((card) => observer.observe(card));
+}
+
 /* ===================== Колонки каталога на телефоне ===================== */
 
 // 2, 3 или 4 карточки в ряд. На компьютере не действует — там свой ряд из трёх
@@ -1525,6 +1605,8 @@ document.addEventListener("DOMContentLoaded", () => {
   renderCatalog();
   setupCols();
   setupSectionReveal();
+  setupHeroParallax();
+  setupCardArrival();
 
   // Высота шапки — в CSS: первый экран занимает всё окно под шапкой (см. .hero в style.css)
   const setHeaderHeight = () => {

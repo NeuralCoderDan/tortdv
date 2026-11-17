@@ -3506,3 +3506,34 @@ main {
   font-weight: 500;
   color: rgba(255, 255, 255, 0.8);
 }
+
+/* ===================== Эффекты для телефонов ===================== */
+
+/* Параллакс: фон первого экрана сдвигается на --hero-shift (его задаёт script.js).
+   Сверху слой выше блока с запасом — при сдвиге вниз край не открывается */
+@media (max-width: 768px) {
+  .hero::before {
+    top: -40%;
+    bottom: -40px;
+    transform: translate3d(0, var(--hero-shift, 0px), 0);
+    will-change: transform;
+  }
+}
+
+/* Карточка ждёт своей очереди: ниже, прозрачная и наклонена назад */
+.card.is-pending {
+  opacity: 0;
+  transform: perspective(800px) translateY(24px) rotateX(6deg);
+}
+
+/* Вплывает на место */
+.card.is-arriving {
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card.is-pending {
+    opacity: 1;
+    transform: none;
+  }
+}
