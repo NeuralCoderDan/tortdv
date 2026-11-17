@@ -29,7 +29,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=26">
+  <link rel="stylesheet" href="style.css?v=27">
 </head>
 <body>
 
@@ -95,8 +95,14 @@
     <!-- Каталог с быстрыми фильтрами -->
     <section class="section" id="cakes">
       <div class="container">
-        <div class="section__head">
+        <div class="section__head section__head--catalog">
           <h2 class="section__title">Торты</h2>
+          <!-- Сколько карточек в ряд — только на телефоне. Выбор запоминается в браузере -->
+          <div class="cols-pick" id="cols-pick" role="radiogroup" aria-label="Карточек в ряд">
+            <button type="button" role="radio" data-cols="2" aria-checked="true" aria-label="По 2 в ряд"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.00" y="2" width="9.00" height="20" rx="1.5"/><rect x="13.00" y="2" width="9.00" height="20" rx="1.5"/></svg></button>
+            <button type="button" role="radio" data-cols="3" aria-checked="false" aria-label="По 3 в ряд"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.00" y="2" width="5.33" height="20" rx="1.5"/><rect x="9.33" y="2" width="5.33" height="20" rx="1.5"/><rect x="16.67" y="2" width="5.33" height="20" rx="1.5"/></svg></button>
+            <button type="button" role="radio" data-cols="4" aria-checked="false" aria-label="По 4 в ряд"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.00" y="2" width="3.50" height="20" rx="1.5"/><rect x="7.50" y="2" width="3.50" height="20" rx="1.5"/><rect x="13.00" y="2" width="3.50" height="20" rx="1.5"/><rect x="18.50" y="2" width="3.50" height="20" rx="1.5"/></svg></button>
+          </div>
         </div>
         <!-- Плашки по поводу: видны всегда -->
         <div class="chips" id="filters" role="group" aria-label="Повод"></div>
@@ -439,7 +445,7 @@
   </div>
 
   <!-- Сначала данные, потом логика -->
-  <script src="data.js?v=26"></script>
-  <script src="script.js?v=26"></script>
+  <script src="data.js?v=27"></script>
+  <script src="script.js?v=27"></script>
 </body>
 </html>

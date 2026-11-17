@@ -3355,3 +3355,143 @@ main {
   background: #fff;
   color: #229ed9; /* фирменный голубой Telegram */
 }
+
+/* ===================== Каталог на телефоне: компактнее и 2 / 3 / 4 в ряд ===================== */
+
+/* Переключатель колонок справа от заголовка «Торты» */
+.section__head--catalog {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cols-pick {
+  display: flex;
+  gap: 4px;
+}
+
+.cols-pick button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: #b3a7b5;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.2s, background-color 0.2s, color 0.2s;
+}
+
+.cols-pick button[aria-checked="true"] {
+  border-color: #e0006a;
+  background: #fff0f5;
+  color: #e0006a;
+}
+
+.cols-pick svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+/* На планшете и компьютере переключатель не нужен */
+@media (min-width: 640px) {
+  .cols-pick {
+    display: none;
+  }
+}
+
+@media (max-width: 639px) {
+  /* Компактнее: название, описание и оценка ближе друг к другу */
+  .card__name {
+    margin-bottom: 4px;
+  }
+
+  .card__desc {
+    margin-bottom: 8px;
+  }
+
+  .card__rate {
+    margin-bottom: 6px;
+  }
+
+  /* 3 и 4 в ряд */
+  .catalog.cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .catalog.cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  /* В узкой карточке — только главное: фото, название, цена, «Заказать».
+     Описание, оценка и вес — на странице торта */
+  .catalog.cols-3 .card,
+  .catalog.cols-4 .card {
+    border-radius: 12px;
+  }
+
+  .catalog.cols-3 .card .media,
+  .catalog.cols-4 .card .media {
+    height: auto;
+    aspect-ratio: 1 / 1;
+  }
+
+  .catalog.cols-3 .card__desc,
+  .catalog.cols-4 .card__desc,
+  .catalog.cols-3 .card__rate,
+  .catalog.cols-4 .card__rate,
+  .catalog.cols-3 .card__per,
+  .catalog.cols-4 .card__per,
+  .catalog.cols-3 .zoom-hint,
+  .catalog.cols-4 .zoom-hint {
+    display: none;
+  }
+
+  .catalog.cols-3 .card__body {
+    padding: 8px;
+  }
+
+  .catalog.cols-4 .card__body {
+    padding: 6px;
+  }
+
+  .catalog.cols-3 .card__name {
+    margin-bottom: 4px;
+    font-size: 14px;
+  }
+
+  .catalog.cols-4 .card__name {
+    margin-bottom: 2px;
+    font-size: 12px;
+  }
+
+  .catalog.cols-3 .card__foot,
+  .catalog.cols-4 .card__foot {
+    gap: 6px;
+  }
+
+  .catalog.cols-3 .card__price {
+    font-size: 16px;
+  }
+
+  .catalog.cols-4 .card__price {
+    font-size: 13px;
+  }
+
+  .catalog.cols-3 .card__foot .btn {
+    padding: 8px 4px;
+    font-size: 12px;
+  }
+
+  .catalog.cols-4 .card__foot .btn {
+    padding: 6px 2px;
+    font-size: 11px;
+  }
+}

@@ -1422,6 +1422,41 @@ function setupGallery() {
   });
 }
 
+/* ===================== Колонки каталога на телефоне ===================== */
+
+// 2, 3 или 4 карточки в ряд. На компьютере не действует — там свой ряд из трёх
+const COLS_KEY = "tortdv-cols";
+
+function setCols(cols, remember = true) {
+  const catalog = $("#catalog");
+  catalog.classList.remove("cols-2", "cols-3", "cols-4");
+  catalog.classList.add(`cols-${cols}`);
+  $$("#cols-pick [data-cols]").forEach((button) => {
+    button.setAttribute("aria-checked", String(Number(button.dataset.cols) === cols));
+  });
+  if (!remember) return;
+  try {
+    localStorage.setItem(COLS_KEY, String(cols));
+  } catch {
+    /* хранилище недоступно — выбор просто не запомнится */
+  }
+}
+
+function setupCols() {
+  let cols = 2;
+  try {
+    const saved = Number(localStorage.getItem(COLS_KEY));
+    if ([2, 3, 4].includes(saved)) cols = saved;
+  } catch {
+    /* хранилище недоступно — начинаем с двух */
+  }
+  setCols(cols, false);
+  $("#cols-pick").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-cols]");
+    if (button) setCols(Number(button.dataset.cols));
+  });
+}
+
 /* ===================== Часы работы ===================== */
 
 // Время в Хабаровске, а не у посетителя: из Москвы в 15:00 у нас уже 22:00
@@ -1477,6 +1512,7 @@ function setupSectionReveal() {
 document.addEventListener("DOMContentLoaded", () => {
   renderFilters();
   renderCatalog();
+  setupCols();
   setupSectionReveal();
 
   // Высота шапки — в CSS: первый экран занимает всё окно под шапкой (см. .hero в style.css)
