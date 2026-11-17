@@ -862,8 +862,44 @@ function updateOrderLink() {
 
 /* ===================== Корзина: несколько тортов одним заказом ===================== */
 
-// Корзина живёт только пока открыта страница: обновил — она пустая
-const cart = [];
+// Корзина хранится в браузере и переживает перезагрузку страницы.
+// Если хранилище недоступно (приватный режим, запрет в настройках) — корзина
+// работает как раньше, просто живёт до перезагрузки
+const CART_KEY = "tortdv-cart";
+
+// Достаём корзину и отбрасываем то, чего на сайте уже нет:
+// удалённый торт, вес, которого нет в списке, странное количество
+function loadCart() {
+  let saved;
+  try {
+    saved = JSON.parse(localStorage.getItem(CART_KEY));
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(saved)) return [];
+  return saved.filter((line) => {
+    const cake = line && findCake(line.id);
+    if (!cake || !Number.isInteger(line.qty) || line.qty < 1 || line.qty > 99) return false;
+    return cake.fixed ? line.weight === null : CONFIG.weights.includes(line.weight);
+  }).map((line) => ({ id: line.id, weight: line.weight, qty: line.qty }));
+}
+
+function saveCart() {
+  try {
+    if (cart.length) localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    else localStorage.removeItem(CART_KEY);
+  } catch {
+    /* хранилище недоступно — корзина просто не переживёт перезагрузку */
+  }
+}
+
+const cart = loadCart();
+
+// Корзину изменили — сохраняем и обновляем значок в шапке
+function cartChanged() {
+  saveCart();
+  renderCartButton();
+}
 
 const lineTotal = (line) => cakePrice(findCake(line.id), line.weight) * line.qty;
 const cartTotal = () => cart.reduce((sum, line) => sum + lineTotal(line), 0);
@@ -874,7 +910,7 @@ function addToCart(cakeId, weight) {
   const same = cart.find((line) => line.id === cakeId && line.weight === weight);
   if (same) same.qty += 1;
   else cart.push({ id: cakeId, weight, qty: 1 });
-  renderCartButton();
+  cartChanged();
 }
 
 function renderCartButton() {
@@ -985,14 +1021,14 @@ function setupCart() {
     const line = cart[Number(button.closest(".cart__item").dataset.index)];
     line.qty += Number(button.dataset.step);
     if (line.qty < 1) cart.splice(cart.indexOf(line), 1);
-    renderCartButton();
+    cartChanged();
     if (!cart.length) return closeCart(); // убрали последний торт — закрываем
     renderCart();
   });
 
   $("#cart-clear").addEventListener("click", () => {
     cart.length = 0;
-    renderCartButton();
+    cartChanged();
     closeCart();
   });
 
