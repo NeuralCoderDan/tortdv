@@ -15,7 +15,7 @@
   <meta property="og:site_name" content="ТортДВ">
   <meta property="og:locale" content="ru_RU">
   <meta property="og:title" content="ТортДВ — торты на заказ в Хабаровске">
-  <meta property="og:description" content="Выберите торт, вес и дату — оформите заказ за 2 минуты через WhatsApp. Наполеон, бенто, муссовые торты.">
+  <meta property="og:description" content="Торты на заказ, пер. Фабричный, 25, Хабаровск. Выберите торт, вес и дату — оформите заказ за 2 минуты через WhatsApp.">
   <meta property="og:image" content="https://neuralcoderdan.github.io/tortdv/images/og-cake.jpg">
   <meta property="og:image:type" content="image/jpeg">
   <meta property="og:image:width" content="892">
@@ -29,7 +29,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=27">
+  <link rel="stylesheet" href="style.css?v=28">
 </head>
 <body>
 
@@ -235,13 +235,13 @@
     <div class="container">
       <p class="footer__brand">ТортДВ</p>
       <ul class="footer__list">
-        <li><span>Самовывоз</span>пер. Фабричный, 25</li>
+        <li><span>Самовывоз</span><address class="footer__address" id="footer-address">пер. Фабричный, 25, Хабаровск</address></li>
         <li><span>Телефон</span><a id="footer-tel" href="#"></a></li>
         <li><span>Почта</span><a href="mailto:zakaz@tortdv.ru">zakaz@tortdv.ru</a></li>
         <li><span>Доставка</span>Яндекс.Доставка, оплачивается отдельно</li>
         <!-- Часы работы и отметку «Сейчас работаем» подставляет script.js из data.js -->
         <li>
-          <span>Часы работы</span><b class="hours" id="footer-hours"></b>
+          <span>Часы работы</span><b class="hours" id="footer-hours"></b><b class="hours hours--off" id="footer-dayoff"></b>
           <em class="open-now" id="open-now"><i class="open-now__dot" aria-hidden="true"></i><span id="open-now-text"></span></em>
         </li>
       </ul>
@@ -445,7 +445,7 @@
   </div>
 
   <!-- Сначала данные, потом логика -->
-  <script src="data.js?v=27"></script>
-  <script src="script.js?v=27"></script>
+  <script src="data.js?v=28"></script>
+  <script src="script.js?v=28"></script>
 </body>
 </html>

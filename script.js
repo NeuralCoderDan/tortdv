@@ -1462,17 +1462,26 @@ function setupCols() {
 // Время в Хабаровске, а не у посетителя: из Москвы в 15:00 у нас уже 22:00
 function bakeryNow() {
   const shifted = new Date(Date.now() + CONFIG.utcOffset * 3600 * 1000);
-  return { hour: shifted.getUTCHours(), minute: shifted.getUTCMinutes() };
+  return { day: shifted.getUTCDay(), hour: shifted.getUTCHours(), minute: shifted.getUTCMinutes() };
 }
 
-// Работаем сейчас? Если нет — когда откроемся: сегодня (до 9:00) или завтра (после 21:00)
+// «Откроемся в понедельник» — день недели в нужной форме (0 — воскресенье)
+const ON_DAY = ["в воскресенье", "в понедельник", "во вторник", "в среду", "в четверг", "в пятницу", "в субботу"];
+
+// Работаем сейчас? Если нет — ищем ближайший рабочий день:
+// сегодня (если ещё не открылись), завтра или конкретный день недели
 function openStatus() {
-  const { hour, minute } = bakeryNow();
+  const { day, hour, minute } = bakeryNow();
   const now = hour + minute / 60;
-  const { open, close } = CONFIG.hours;
-  if (now >= open && now < close) return { open: true, text: "Сейчас работаем" };
-  const when = now < open ? "сегодня" : "завтра";
-  return { open: false, text: `Откроемся ${when} в ${open}:00` };
+  const { days, open, close } = CONFIG.hours;
+  if (days.includes(day) && now >= open && now < close) return { open: true, text: "Сейчас работаем" };
+  for (let ahead = 0; ahead < 7; ahead++) {
+    const next = (day + ahead) % 7;
+    if (!days.includes(next) || (ahead === 0 && now >= open)) continue;
+    const when = ahead === 0 ? "сегодня" : ahead === 1 ? "завтра" : ON_DAY[next];
+    return { open: false, text: `Откроемся ${when} в ${open}:00` };
+  }
+  return { open: false, text: "Сейчас закрыто" }; // на случай, если рабочих дней не указано
 }
 
 function renderOpenStatus() {
@@ -1483,6 +1492,8 @@ function renderOpenStatus() {
 
 function setupHours() {
   $("#footer-hours").textContent = CONFIG.hours.label;
+  $("#footer-dayoff").textContent = CONFIG.hours.dayOff || "";
+  $("#footer-address").textContent = CONFIG.address;
   renderOpenStatus();
   setInterval(renderOpenStatus, 60 * 1000); // раз в минуту: страница может быть открыта долго
 }

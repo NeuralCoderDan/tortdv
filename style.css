@@ -3495,3 +3495,14 @@ main {
     font-size: 11px;
   }
 }
+
+/* Адрес в подвале — обычный текст, без курсива по умолчанию у <address> */
+.footer__address {
+  font-style: normal;
+}
+
+/* «Сб–Вс: выходной» — второй строкой, чуть тише */
+.hours--off {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+}
