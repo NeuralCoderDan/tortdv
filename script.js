@@ -127,11 +127,15 @@ computePriceBounds();
 price.from = PRICE_MIN;
 price.to = PRICE_MAX;
 
-// Сколько гостей накормит торт: примерно 150–200 г на человека
+// Один расчёт для всего сайта: 150 г торта на человека, дробная порция не считается.
+// 1,5 кг → 10, 2 кг → 13, 2,5 кг → 16, 3 кг → 20, 750 г → 5
+const GRAMS_PER_GUEST = 150;
+const portions = (kg) => Math.floor((kg * 1000) / GRAMS_PER_GUEST);
+
+// Подсказка в фильтре: на сколько гостей хватит торта выбранного веса
 function guestsText(kg) {
-  const low = Math.max(2, Math.round((kg * 1000) / 200));
-  const high = Math.max(low + 1, Math.round((kg * 1000) / 150));
-  return `≈ ${low}–${high} ${plural(high, "гость", "гостя", "гостей")}`;
+  const n = portions(kg);
+  return `≈ ${n} ${plural(n, "гость", "гостя", "гостей")}`;
 }
 
 function renderFilters() {
@@ -151,6 +155,53 @@ function renderFilters() {
   $("#filter-sort").innerHTML = SORTS
     .map((sort) => `<option value="${sort.id}">${sort.label}</option>`)
     .join("");
+}
+
+/* ===================== Полёт торта в корзину ===================== */
+
+// Круглая копия фото (80 px) летит по дуге от места «from» (прямоугольник фото в окне заказа)
+// к значку корзины в шапке, по пути уменьшается до 20 px и делает оборот.
+// В конце значок корзины слегка подпрыгивает. Вызывается, когда торт уже лежит в корзине
+function flyCake(cakeId, from) {
+  const target = $("#cart-btn");
+  const to = target.getBoundingClientRect();
+  const SIZE = 80;
+  const EASE = "cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+
+  // Обёртка едет по горизонтали равномерно, фото внутри — по вертикали с замедлением.
+  // Два разных темпа и складываются в плавную дугу
+  const flyer = document.createElement("div");
+  flyer.className = "cake-flyer";
+  flyer.style.left = `${from.left + from.width / 2 - SIZE / 2}px`;
+  flyer.style.top = `${from.top + from.height / 2 - SIZE / 2}px`;
+  const img = document.createElement("img");
+  img.src = findCake(cakeId).photo;
+  img.alt = "";
+  flyer.appendChild(img);
+  document.body.appendChild(flyer);
+
+  const dx = to.left + to.width / 2 - (from.left + from.width / 2);
+  const dy = to.top + to.height / 2 - (from.top + from.height / 2);
+  void flyer.offsetWidth; // фиксируем старт, чтобы переход сработал
+  flyer.style.transition = "transform 0.7s linear";
+  img.style.transition = `transform 0.7s ${EASE}, opacity 0.7s ${EASE}`;
+  flyer.style.transform = `translateX(${dx}px)`;
+  img.style.transform = `translateY(${dy}px) scale(0.25) rotate(360deg)`; // 80 px → 20 px
+  img.style.opacity = "0.85";
+
+  let done = false;
+  const land = () => {
+    if (done) return;
+    done = true;
+    flyer.remove();
+    // Цель «прыгает»: 1 → 1.3 → 1
+    target.animate?.(
+      [{ transform: "scale(1)" }, { transform: "scale(1.3)" }, { transform: "scale(1)" }],
+      { duration: 350, easing: "ease-out" }
+    );
+  };
+  img.addEventListener("transitionend", land, { once: true });
+  setTimeout(land, 900); // страховка, если transitionend не придёт
 }
 
 function renderCatalog() {
@@ -180,11 +231,11 @@ function renderCatalog() {
       </div>
     </article>`).join("");
 
-  // «Заказать»: свой обработчик на каждой кнопке. Какой торт — берём из data-order
+  // «Заказать»: свой обработчик на каждой кнопке. Какой торт — берём из data-order.
+  // Сразу открывается окно заказа: данные, предоплата, «Отправить в WhatsApp» или «В корзину»
   $$("#catalog [data-order]").forEach((button) => {
     button.addEventListener("click", (event) => {
       event.stopPropagation(); // нажатие на кнопку не открывает страницу торта
-      console.log("order click", button.dataset.order); // отладка: видно в консоли браузера
       openOrder(button.dataset.order, button);
     });
   });
@@ -716,15 +767,10 @@ function orderWeight(cake) {
   return cake.fixed ? null : chosenWeight[cake.id];
 }
 
-// Сколько порций в торте: считаем по 150 г на человека
-const portions = (kg) => Math.round(kg / 0.15);
-
-// Вес по числу гостей: 5–8 → 1,5 кг, 9–14 → 2 кг, 15–20 → 2,5 кг, 21 и больше → 3 кг
+// Вес по числу гостей — самый лёгкий торт, которого хватит всем (по тому же расчёту):
+// до 10 → 1,5 кг, 11–13 → 2 кг, 14–16 → 2,5 кг, 17 и больше → 3 кг
 function weightForGuests(guests) {
-  if (guests <= 8) return 1.5;
-  if (guests <= 14) return 2;
-  if (guests <= 20) return 2.5;
-  return 3;
+  return CONFIG.weights.find((kg) => portions(kg) >= guests) ?? CONFIG.weights[CONFIG.weights.length - 1];
 }
 
 // Цена и предоплата в окне — пересчитываются при смене веса
@@ -733,8 +779,12 @@ function renderOrderPrice() {
   const total = cakePrice(cake, orderWeight(cake));
   if (!cake.fixed) {
     const kg = chosenWeight[cake.id];
-    $("#o-guests-hint").textContent =
-      `${kilos(kg)} = примерно ${portions(kg)} ${plural(portions(kg), "порция", "порции", "порций")}`;
+    const n = portions(kg);
+    const guests = Math.floor(Number($("#o-guests").value));
+    let hint = `${kilos(kg)} = примерно ${n} ${plural(n, "порция", "порции", "порций")}`;
+    // Гостей больше, чем порций даже в самом большом торте, — говорим честно
+    if (guests > n) hint += ` — на ${guests} ${plural(guests, "гостя", "гостей", "гостей")} не хватит, возьмите два торта`;
+    $("#o-guests-hint").textContent = hint;
   }
   $("#order-price").textContent = `Итого: ${money(total)}`;
   $("#order-prepay").textContent = `Предоплата ${Math.round(CONFIG.prepay * 100)}%: ${money(total * CONFIG.prepay)}`;
@@ -1014,15 +1064,30 @@ function setupOrder() {
     renderOrderPrice();
   });
 
-  // «В корзину»: торт складывается, окно закрывается, значок в шапке подпрыгивает
+  // «В корзину»: торт складывается в корзину, окно мягко уходит, человек снова на главной,
+  // а фото торта вылетает из окна и по дуге улетает в значок корзины в шапке
   $("#order-to-cart").addEventListener("click", () => {
-    const cake = findCake(orderNow.id);
-    addToCart(orderNow.id, orderWeight(cake));
-    closeOrder();
-    const button = $("#cart-btn");
-    button.classList.remove("is-pop");
-    void button.offsetWidth;
-    button.classList.add("is-pop");
+    const modal = $("#order-modal");
+    if (modal.classList.contains("is-leaving")) return; // второе нажатие, пока окно уходит
+    const cakeId = orderNow.id;
+    // Откуда вылетит торт: из фото в окне, если оно на экране. На телефоне до кнопки
+    // «В корзину» окно прокручивают, фото уезжает вверх — тогда торт вылетает из самой кнопки
+    const card = $("#order-modal .order__card").getBoundingClientRect();
+    let photo = $("#order-photo .media").getBoundingClientRect();
+    const photoSeen = photo.top >= card.top - 8 && photo.bottom <= window.innerHeight + 8; // видно целиком
+    if (!photoSeen) photo = $("#order-to-cart").getBoundingClientRect();
+    addToCart(cakeId, orderWeight(findCake(cakeId)));
+    if (!$("#pd").hidden) closeProduct(); // заказывали со страницы торта — возвращаемся на главную
+
+    // Анимации отключены в системе — просто закрываем окно
+    if (reducedMotion.matches) return closeOrder();
+
+    flyCake(cakeId, photo);
+    modal.classList.add("is-leaving"); // окно плавно гаснет
+    setTimeout(() => {
+      modal.classList.remove("is-leaving");
+      closeOrder();
+    }, 280);
   });
 
   $("#order-close").addEventListener("click", closeOrder);

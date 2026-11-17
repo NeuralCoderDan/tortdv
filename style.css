@@ -3262,3 +3262,36 @@ main {
 @keyframes thanks-in {
   from { opacity: 0; transform: scale(0.8); }
 }
+
+/* ===================== Полёт торта в шапку ===================== */
+/* Летит поверх всего, включая окно заказа, и не мешает нажатиям */
+.cake-flyer {
+  position: fixed;
+  z-index: 300;
+  width: 80px;
+  height: 80px;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.cake-flyer img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  will-change: transform;
+}
+
+/* Окно заказа мягко уходит после «В корзину»: гаснет и чуть опускается */
+.modal.is-leaving {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s ease;
+}
+
+.modal.is-leaving .modal__card {
+  transform: translateY(16px) scale(0.97);
+  transition: transform 0.28s ease;
+}
