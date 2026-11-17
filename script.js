@@ -8,6 +8,12 @@ const findCake = (id) => CAKES.find((cake) => cake.id === id);
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Текст из data.js перед вставкой в HTML: & < > " ' становятся безопасными.
+// Иначе название вроде «Торт <Мечта>» или кавычка в описании сломали бы страницу
+const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({
+  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+})[ch]);
+
 // 7600 → «7 600 ₽» (обычный пробел, чтобы одинаково выглядело везде)
 const money = (value) => Math.round(value).toLocaleString("ru-RU").replace(/\s/g, " ") + " ₽";
 const kilos = (value) => String(value).replace(".", ",") + " кг";
@@ -39,18 +45,19 @@ const PH_ICON =
 
 // Любое фото: src — точный путь из data.js. Нет пути — заглушка без запроса к серверу.
 // Если файл всё же не загрузился — тоже показываем заглушку.
+// Заглушка одна для обоих случаев: фото ещё нет или файл не загрузился
+const PHOTO_SOON = `<div class="media__ph">${PH_ICON}<small>Фото скоро будет</small></div>`;
+
 function photoHTML(src, alt, tint, lazy = true) {
   if (!src) {
     return `
-    <div class="media no-photo" style="--tint:${tint}">
-      <div class="media__ph">${PH_ICON}<small>Фото скоро будет</small></div>
-    </div>`;
+    <div class="media no-photo" style="--tint:${escapeHtml(tint)}">${PHOTO_SOON}</div>`;
   }
   return `
-    <div class="media" style="--tint:${tint}">
-      <img src="${src}" alt="${alt}" ${lazy ? 'loading="lazy"' : ""}
+    <div class="media" style="--tint:${escapeHtml(tint)}">
+      <img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" ${lazy ? 'loading="lazy"' : ""}
            onerror="this.parentNode.classList.add('no-photo')">
-      <div class="media__ph">${PH_ICON}<small>${src}</small></div>
+      ${PHOTO_SOON}
     </div>`;
 }
 
@@ -142,18 +149,18 @@ function renderFilters() {
   // Плашки по поводу наверху: быстрый доступ, можно выбрать несколько
   $("#filters").innerHTML = FILTERS.map(
     (filter) =>
-      `<button class="chip" type="button" data-filter="${filter.id}" aria-pressed="${isTagOn(filter.id)}">${filter.label}</button>`
+      `<button class="chip" type="button" data-filter="${escapeHtml(filter.id)}" aria-pressed="${isTagOn(filter.id)}">${escapeHtml(filter.label)}</button>`
   ).join("");
 
   // Те же поводы в панели фильтров
   $("#filter-tags").innerHTML = FILTERS.filter((filter) => filter.id !== "all")
     .map((filter) => `
-      <button class="tag-pick" type="button" data-filter="${filter.id}" aria-pressed="${isTagOn(filter.id)}">
-        <span class="tag-pick__box" aria-hidden="true"></span>${filter.label}
+      <button class="tag-pick" type="button" data-filter="${escapeHtml(filter.id)}" aria-pressed="${isTagOn(filter.id)}">
+        <span class="tag-pick__box" aria-hidden="true"></span>${escapeHtml(filter.label)}
       </button>`).join("");
 
   $("#filter-sort").innerHTML = SORTS
-    .map((sort) => `<option value="${sort.id}">${sort.label}</option>`)
+    .map((sort) => `<option value="${escapeHtml(sort.id)}">${escapeHtml(sort.label)}</option>`)
     .join("");
 }
 
@@ -206,27 +213,27 @@ function flyCake(cakeId, from) {
 
 function renderCatalog() {
   $("#catalog").innerHTML = CAKES.map((cake) => `
-    <article class="card" data-id="${cake.id}">
-      <button class="card__zoom" type="button" data-zoom aria-label="Смотреть все фото торта «${cake.name}»">
+    <article class="card" data-id="${escapeHtml(cake.id)}">
+      <button class="card__zoom" type="button" data-zoom aria-label="Смотреть все фото торта «${escapeHtml(cake.name)}»">
         ${mediaHTML(cake)}
         <span class="zoom-hint" aria-hidden="true">
           <svg viewBox="0 0 12 12"><path d="M7 1h4v4M5 11H1V7M11 1 7 5M1 11l4-4"/></svg>${CONFIG.galleryLabels.length} фото
         </span>
       </button>
       <div class="card__body">
-        <h3 class="card__name" title="${cake.name}"><span>${cake.name}</span></h3>
-        <p class="card__desc">${cake.desc}</p>
+        <h3 class="card__name" title="${escapeHtml(cake.name)}"><span>${escapeHtml(cake.name)}</span></h3>
+        <p class="card__desc">${escapeHtml(cake.desc)}</p>
         <div class="card__foot">
           <p class="card__rate">
-            <button class="rate-chip" type="button" data-rate="${cake.id}">
+            <button class="rate-chip" type="button" data-rate="${escapeHtml(cake.id)}">
               <span aria-hidden="true">⭐</span><b class="rate-chip__score"></b>
             </button>
-            <button class="rate-chip" type="button" data-rate="${cake.id}">
+            <button class="rate-chip" type="button" data-rate="${escapeHtml(cake.id)}">
               <span aria-hidden="true">💬</span><b class="rate-chip__count"></b>
             </button>
           </p>
           <p class="card__cost"><span class="card__price"></span><span class="card__per"></span></p>
-          <button class="btn btn--primary" type="button" data-order="${cake.id}">Заказать</button>
+          <button class="btn btn--primary" type="button" data-order="${escapeHtml(cake.id)}">Заказать</button>
         </div>
       </div>
     </article>`).join("");
@@ -794,7 +801,15 @@ function renderOrderPrice() {
   updateOrderLink();
 }
 
+// Самая ранняя дата — сегодня + CONFIG.minDays, считаем в момент открытия окна.
+// Страница могла быть открыта со вчера: тогда и минимум, и выбранная дата сдвигаются
+function refreshMinDate(input) {
+  input.min = dateFromToday(CONFIG.minDays);
+  if (!input.value || input.value < input.min) input.value = input.min;
+}
+
 function openOrder(cakeId, opener) {
+  refreshMinDate($("#o-date"));
   const cake = findCake(cakeId);
   orderNow.id = cakeId;
   orderNow.opener = opener;
@@ -805,7 +820,7 @@ function openOrder(cakeId, opener) {
 
   // Вес: 1,5 / 2 / 2,5 / 3 кг; у бенто — его фиксированный вес
   $("#order-weights").innerHTML = cake.fixed
-    ? `<span class="weight weight--fixed">${cake.fixed.weight}</span>`
+    ? `<span class="weight weight--fixed">${escapeHtml(cake.fixed.weight)}</span>`
     : CONFIG.weights.map((kg) => `
         <button class="weight" type="button" role="radio" data-kg="${kg}">${kilos(kg)}</button>`).join("");
   $("#order-weights").setAttribute("role", cake.fixed ? "presentation" : "radiogroup");
@@ -937,8 +952,8 @@ function renderCart() {
       <li class="cart__item" data-index="${i}">
         <div class="cart__photo">${mediaHTML(cake, false)}</div>
         <div class="cart__info">
-          <b class="cart__name">${cake.name}</b>
-          <span class="cart__meta">${weightText(cake, line.weight)} · ${money(cakePrice(cake, line.weight))}</span>
+          <b class="cart__name">${escapeHtml(cake.name)}</b>
+          <span class="cart__meta">${escapeHtml(weightText(cake, line.weight))} · ${money(cakePrice(cake, line.weight))}</span>
           <span class="cart__qty">
             <button type="button" data-step="-1" aria-label="Убрать один">−</button>
             <output>${line.qty}</output>
@@ -959,6 +974,7 @@ let cartOpener = null;
 
 function openCart(opener) {
   if (!cart.length) return;
+  refreshMinDate($("#c-date"));
   cartOpener = opener;
   renderCart();
   $("#cart-error").hidden = true;
@@ -1012,8 +1028,7 @@ function updateCartLink() {
 
 function setupCart() {
   const date = $("#c-date");
-  date.min = dateFromToday(CONFIG.minDays);
-  date.value = date.min;
+  refreshMinDate(date);
   $("#c-date-hint").textContent = `Не раньше чем через ${CONFIG.minDays} дней`;
 
   $("#cart-btn").addEventListener("click", (event) => openCart(event.currentTarget));
@@ -1064,8 +1079,7 @@ function setupCart() {
 function setupOrder() {
   // Дата: не раньше чем через CONFIG.minDays дней
   const date = $("#o-date");
-  date.min = dateFromToday(CONFIG.minDays);
-  date.value = date.min;
+  refreshMinDate(date);
   $("#o-date-hint").textContent = `Не раньше чем через ${CONFIG.minDays} дней`;
 
   $("#order-form").addEventListener("input", (event) => {
@@ -1182,7 +1196,7 @@ function openProduct(cakeId, opener) {
   // Вес: плашки для торта на вес, одна строка для бенто
   const weights = $("#pd-weights");
   weights.innerHTML = cake.fixed
-    ? `<span class="weight weight--fixed">${cake.fixed.weight}</span>`
+    ? `<span class="weight weight--fixed">${escapeHtml(cake.fixed.weight)}</span>`
     : CONFIG.weights.map((kg) => `
         <button class="weight" type="button" role="radio" data-kg="${kg}"
                 aria-checked="${kg === chosenWeight[cake.id]}">${kilos(kg)}</button>`).join("");
@@ -1191,15 +1205,15 @@ function openProduct(cakeId, opener) {
   // Миниатюры: главное фото и 5 ракурсов
   const items = galleryOf(cake);
   $("#pd-thumbs").innerHTML = items.map((item, i) => `
-    <button class="pd__thumb" type="button" data-photo="${i}" aria-label="${item.label}">
+    <button class="pd__thumb" type="button" data-photo="${i}" aria-label="${escapeHtml(item.label)}">
       ${photoHTML(item.base, "", cake.tint)}
     </button>`).join("");
 
   // Вкладки: описание всегда первое, остальные из настроек
   $("#pd-tabs").innerHTML = [{ id: "about", label: "Описание" }, ...CONFIG.tabs, { id: "reviews", label: "Отзывы" }]
     .map((tab) => `
-      <button class="pd__tab" type="button" role="tab" data-tab="${tab.id}"
-              aria-selected="${tab.id === pd.tab}">${tab.label}</button>`).join("");
+      <button class="pd__tab" type="button" role="tab" data-tab="${escapeHtml(tab.id)}"
+              aria-selected="${tab.id === pd.tab}">${escapeHtml(tab.label)}</button>`).join("");
 
   const facts = cake.about?.facts || [];
   $("#pd-facts").innerHTML = facts.map(() => "<div><dt></dt><dd></dd></div>").join("");
@@ -1315,9 +1329,9 @@ function openGallery(cakeId, opener, startIndex = 0) {
 
   $("#lb-title").textContent = cake.name;
   $("#lb-thumbs").innerHTML = gallery.items.map((item, i) => `
-    <button class="lb__thumb" type="button" data-index="${i}" aria-label="${item.label}">
+    <button class="lb__thumb" type="button" data-index="${i}" aria-label="${escapeHtml(item.label)}">
       ${photoHTML(item.base, "", cake.tint)}
-      ${item.label}
+      ${escapeHtml(item.label)}
     </button>`).join("");
 
   $("#lightbox").hidden = false;
