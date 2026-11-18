@@ -14,7 +14,7 @@
   const TUNNEL = (() => {
     try {
       const value = new URLSearchParams(location.search).get("assistant");
-      if (value && /^https:\/\/[a-z0-9-]+\.(lhr\.life|lhr\.pro|localhost\.run)$/i.test(value)) return value;
+      if (value && /^https:\/\/([a-z0-9-]+\.)+(lhr\.life|lhr\.pro|localhost\.run)$/i.test(value)) return value;
     } catch (e) { /* адрес страницы не прочитался — работаем по обычному адресу */ }
     return null;
   })();
