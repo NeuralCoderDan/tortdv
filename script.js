@@ -222,6 +222,7 @@ function renderCatalog() {
         <span class="zoom-hint" aria-hidden="true">
           <svg viewBox="0 0 12 12"><path d="M7 1h4v4M5 11H1V7M11 1 7 5M1 11l4-4"/></svg>${CONFIG.galleryLabels.length} фото
         </span>
+        ${cake.spin ? '<span class="spin-badge">360°</span>' : ""}
       </button>
       <div class="card__body">
         <h3 class="card__name" title="${escapeHtml(cake.name)}"><span>${escapeHtml(cake.name)}</span></h3>
@@ -265,7 +266,7 @@ function renderCatalog() {
     card.addEventListener("mousemove", (event) => {
       if (!canTilt.matches || reducedMotion.matches) return;
       // Над кнопками карточку не наклоняем: иначе кнопка уезжает из-под курсора
-      if (event.target.closest("[data-order], [data-rate]")) {
+      if (event.target.closest("[data-order], [data-rate], .spin")) {
         card.style.transform = "";
         return;
       }
@@ -292,7 +293,7 @@ function renderCatalog() {
     };
     card.addEventListener("touchstart", (event) => {
       if (!isTouchFx() || event.touches.length > 1) return;
-      if (event.target.closest("[data-order], [data-rate]")) return;
+      if (event.target.closest("[data-order], [data-rate], .spin")) return;
       const touch = event.touches[0];
       const rect = card.getBoundingClientRect();
       const x = (touch.clientX - rect.left) / rect.width - 0.5;  // −0.5 … 0.5
@@ -316,6 +317,42 @@ function renderCatalog() {
     updateCardPrice(cake.id);
     renderCardRating(cake.id);
   });
+  setupCardSpins();
+}
+
+// Вращение на карточке: только для настоящих кадров торта (у примера — только в галерее).
+// Когда карточка показалась на экране — грузим первый кадр, остальные 35 — при первом касании.
+// В режиме 3–4 карточки в ряд вращение выключено: нажатие открывает галерею, там торт и крутится
+function setupCardSpins() {
+  if (!window.TortSpin) return;
+  const spinCards = $$("#catalog .card").filter((card) => {
+    const cake = findCake(card.dataset.id);
+    return cake.spin && !cake.spin.demo;
+  });
+  if (!spinCards.length) return;
+  const small = () => {
+    const catalog = $("#catalog");
+    return window.matchMedia("(max-width: 639px)").matches
+      && (catalog.classList.contains("cols-3") || catalog.classList.contains("cols-4"));
+  };
+  const mount = (card) => {
+    const cake = findCake(card.dataset.id);
+    const media = $(".media", card);
+    media.classList.add("has-spin");
+    new TortSpin.Viewer(media, cake.spin, {
+      alt: `Торт «${cake.name}» на 360°: крутите влево и вправо`,
+      enabled: () => !small()
+    });
+  };
+  if (!("IntersectionObserver" in window)) return spinCards.forEach(mount);
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      observer.unobserve(entry.target);
+      mount(entry.target);
+    });
+  }, { rootMargin: "200px 0px" });
+  spinCards.forEach((card) => observer.observe(card));
 }
 
 function updateCardPrice(id) {
@@ -1366,13 +1403,23 @@ function setupProduct() {
 
 /* ===================== Галерея фото ===================== */
 
-const gallery = { cake: null, items: [], index: 0, opener: null };
+const gallery = { cake: null, items: [], index: 0, opener: null, spin: null };
 
+// startIndex — номер фото, как на странице торта (0 — главное).
+// Если у торта есть вращение, оно стоит первым слайдом, перед главным фото
 function openGallery(cakeId, opener, startIndex = 0) {
   const cake = findCake(cakeId);
   gallery.cake = cake;
   gallery.items = galleryOf(cake);
   gallery.opener = opener;
+  if (cake.spin && window.TortSpin) {
+    gallery.items.unshift({
+      spin: true,
+      label: cake.spin.demo ? "Пример 360°" : "360°",
+      base: TortSpin.frameUrls(cake.spin)[0]
+    });
+    startIndex += 1;
+  }
 
   $("#lb-title").textContent = cake.name;
   $("#lb-thumbs").innerHTML = gallery.items.map((item, i) => `
@@ -1388,6 +1435,8 @@ function openGallery(cakeId, opener, startIndex = 0) {
 }
 
 function closeGallery() {
+  gallery.spin?.destroy();
+  gallery.spin = null;
   $("#lightbox").hidden = true;
   // Под галереей может быть открыта страница торта — тогда прокрутку не возвращаем
   if ($("#pd").hidden) {
@@ -1403,7 +1452,19 @@ function showSlide(index, dir = 0) {
   const item = gallery.items[gallery.index];
   const frame = $("#lb-frame");
 
-  frame.innerHTML = photoHTML(item.base, `${gallery.cake.name}: ${item.label.toLowerCase()}`, gallery.cake.tint, false);
+  gallery.spin?.destroy();
+  gallery.spin = null;
+  if (item.spin) {
+    // Слайд 360°: в галерее сразу грузим все кадры
+    frame.innerHTML = '<div class="media lb__spin"></div>';
+    gallery.spin = new TortSpin.Viewer($(".lb__spin", frame), gallery.cake.spin, {
+      label: item.label,
+      alt: `${item.label}: торт крутится влево и вправо`
+    });
+    gallery.spin.loadAll();
+  } else {
+    frame.innerHTML = photoHTML(item.base, `${gallery.cake.name}: ${item.label.toLowerCase()}`, gallery.cake.tint, false);
+  }
   if (dir && !reducedMotion.matches && frame.animate) {
     frame.animate(
       [{ opacity: 0, transform: `translateX(${dir * 40}px)` }, { opacity: 1, transform: "none" }],
@@ -1446,6 +1507,10 @@ function setupGallery() {
     if (event.target.id === "lb-stage") closeGallery();
   });
   $("#lb-stage").addEventListener("pointerdown", (event) => {
+    if (event.target.closest(".spin")) {
+      startX = null; // на слайде 360° свайп крутит торт, листать — стрелками
+      return;
+    }
     startX = event.clientX;
     startY = event.clientY;
     swiped = false;
@@ -1679,7 +1744,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Нажали на фото — открываем галерею
     const zoomBtn = event.target.closest("[data-zoom]");
     if (zoomBtn) {
-      openGallery(id, zoomBtn);
+      // −1 — слайд перед главным фото, то есть вращение 360°
+      openGallery(id, zoomBtn, event.target.closest(".spin-badge") ? -1 : 0);
       return;
     }
 
