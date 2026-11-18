@@ -3,8 +3,9 @@
 // Когда появится сервер-посредник, здесь меняется только адрес (и, при необходимости, модель).
 
 const ASSISTANT_CONFIG = {
-  endpoint: "http://localhost:11434/v1/chat/completions", // OpenAI-совместимый адрес, ответ потоком
-  model: "qwen2.5:7b",
+  endpoint: "https://tortdv-assistant.saidovdaniel2.workers.dev", // сервер-посредник (Cloudflare Worker), ответ потоком
+  // Для проверки на своём Mac можно вернуть Ollama: "http://localhost:11434/v1/chat/completions"
+  model: "google/gemma-4-31b-it:free", // справочно: модель выбирает сервер-посредник (см. worker/wrangler.toml)
   temperature: 0.4,
 
   maxMessageLength: 500, // символов в одном сообщении

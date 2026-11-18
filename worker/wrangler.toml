@@ -1,0 +1,23 @@
+# Сервер-посредник для ИИ-помощника «Помощник ТортДВ» (Cloudflare Workers, бесплатный тариф).
+# Ключ OpenRouter хранится в секрете OPENROUTER_API_KEY (wrangler secret put), не в этом файле.
+
+name = "tortdv-assistant"
+main = "src/index.js"
+compatibility_date = "2026-06-01"
+
+[vars]
+# Бесплатные модели OpenRouter: основная и запасная (если основная занята).
+# Список бесплатных меняется — актуальный: https://openrouter.ai/models?max_price=0
+MODEL = "google/gemma-4-31b-it:free"
+FALLBACK_MODEL = "google/gemma-4-26b-a4b-it:free"
+FALLBACK2_MODEL = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
+MAX_TOKENS = "900"
+
+# С каких сайтов можно обращаться (плюс любой http://localhost:порт — для проверки)
+ALLOWED_ORIGINS = "https://neuralcoderdan.github.io"
+
+# Защита
+MAX_MESSAGE = "500"       # символов в сообщении посетителя
+HISTORY = "10"            # сколько последних сообщений диалога уходит модели
+RATE_PER_MINUTE = "8"     # запросов в минуту с одного IP
+RATE_PER_DAY = "60"       # запросов в сутки с одного IP

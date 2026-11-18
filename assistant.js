@@ -84,7 +84,8 @@
     if (match) text = text.slice(0, match.index);
     text = cutCJK(text);
     // Разметку Markdown (**жирный**, ### заголовок) показываем как обычный текст
-    text = text.replace(/\*\*(.+?)\*\*/g, "$1").replace(/__(.+?)__/g, "$1").replace(/^#{1,4}\s+/gm, "");
+    // Служебные id в скобках («(cake6)») — карточки уже есть, в тексте они лишние
+    text = text.replace(/\s*\(cake\d+\)/gi, "").replace(/\*\*(.+?)\*\*/g, "$1").replace(/__(.+?)__/g, "$1").replace(/^#{1,4}\s+/gm, "");
     // Ответ ещё печатается и закончился на «C», «CAK», «CAKES» — это может быть начало строки CAKES
     text = text.replace(/(^|\s)[*_`]*C(A(K(E(S)?)?)?)?$/i, "$1");
     return text.trim();
