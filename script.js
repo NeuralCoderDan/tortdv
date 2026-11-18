@@ -222,7 +222,7 @@ function renderCatalog() {
         <span class="zoom-hint" aria-hidden="true">
           <svg viewBox="0 0 12 12"><path d="M7 1h4v4M5 11H1V7M11 1 7 5M1 11l4-4"/></svg>${CONFIG.galleryLabels.length} фото
         </span>
-        ${cake.spin ? '<span class="spin-badge">360°</span>' : ""}
+        ${spinBadge(cake)}
       </button>
       <div class="card__body">
         <h3 class="card__name" title="${escapeHtml(cake.name)}"><span>${escapeHtml(cake.name)}</span></h3>
@@ -318,6 +318,13 @@ function renderCatalog() {
     renderCardRating(cake.id);
   });
   setupCardSpins();
+}
+
+// Значок вращения на фото карточки: у примера (3D-модель или чужие кадры) — «Пример 360°»
+function spinBadge(cake) {
+  if (cake.model || cake.spin?.demo) return '<span class="spin-badge">Пример 360°</span>';
+  if (cake.spin) return '<span class="spin-badge">360°</span>';
+  return "";
 }
 
 // Вращение на карточке: только для настоящих кадров торта (у примера — только в галерее).
@@ -1405,6 +1412,106 @@ function setupProduct() {
 
 const gallery = { cake: null, items: [], index: 0, opener: null, spin: null };
 
+// 3D-просмотр (model-viewer) грузим с CDN только когда впервые открыли слайд с моделью
+const MODEL_VIEWER_URL = "https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js";
+let modelViewerLoading = null;
+function loadModelViewer() {
+  if (window.customElements?.get("model-viewer")) return Promise.resolve();
+  if (!modelViewerLoading) {
+    modelViewerLoading = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.type = "module";
+      script.src = MODEL_VIEWER_URL;
+      script.onerror = () => {
+        modelViewerLoading = null; // в следующий раз попробуем снова
+        reject(new Error("model-viewer не загрузился"));
+      };
+      document.head.appendChild(script);
+      customElements.whenDefined("model-viewer").then(resolve);
+    });
+  }
+  return modelViewerLoading;
+}
+
+// Слайд «Пример 360°»: модель, подсказка, загрузка, подпись под моделью
+function showModelSlide(frame, cake) {
+  const model = cake.model;
+  frame.innerHTML = `
+    <div class="lb__model">
+      <div class="lb__model-view">
+        <span class="spin__label">Пример 360°</span>
+        <span class="spin__hint">Покрутите пальцем ↔</span>
+        <span class="lb__model-load">Загрузка 3D…</span>
+      </div>
+      <p class="lb__model-note">
+        Пример 360° — так будут выглядеть ваши торты. Модель демонстрационная, не этот торт
+        <small class="lb__model-credit" hidden></small>
+      </p>
+    </div>`;
+  const view = $(".lb__model-view", frame);
+  const hint = $(".spin__hint", view);
+  const load = $(".lb__model-load", view);
+  if (gallery.hintSeen) hint.classList.add("is-gone");
+
+  if (model.credit) {
+    const credit = $(".lb__model-credit", frame);
+    const link = document.createElement("a");
+    link.href = model.credit.url;
+    link.target = "_blank";
+    link.rel = "noopener";
+    link.textContent = model.credit.author;
+    credit.append("3D-модель: ", link, `, ${model.credit.license || "CC BY"}`);
+    credit.hidden = false;
+  }
+
+  let broken = false;
+  const failed = () => {
+    broken = true;
+    load.textContent = "3D-модель не загрузилась";
+    load.hidden = false;
+    hint.classList.add("is-gone");
+  };
+
+  loadModelViewer().then(() => {
+    if (!view.isConnected) return; // пока грузилось, слайд уже переключили
+    const viewer = document.createElement("model-viewer");
+    // Наклон камеры 45°–85°: под торт не заглянуть. Приближение выключено —
+    // камера всегда на удобном расстоянии, щипок двумя пальцами ничего не ломает
+    const attrs = {
+      src: model.src,
+      alt: "Пример 360°: демонстрационная 3D-модель торта, крутите влево и вправо",
+      "camera-controls": "",
+      "touch-action": "pan-y",
+      "interaction-prompt": "none",
+      "disable-pan": "",
+      "disable-zoom": "",
+      "camera-orbit": "0deg 70deg 105%",
+      "min-camera-orbit": "auto 45deg auto",
+      "max-camera-orbit": "auto 85deg auto",
+      "shadow-intensity": "1",
+      "shadow-softness": "1",
+      loading: "eager",
+      reveal: "auto"
+    };
+    Object.entries(attrs).forEach(([name, value]) => viewer.setAttribute(name, value));
+    // Свою полосу загрузки рисуем сами — встроенную прячем
+    viewer.innerHTML = '<div slot="progress-bar"></div>';
+    viewer.addEventListener("progress", (event) => {
+      if (broken) return; // после ошибки model-viewer ещё присылает «100%» — не затираем сообщение
+      const percent = Math.round(event.detail.totalProgress * 100);
+      load.textContent = `Загрузка 3D… ${percent}%`;
+    });
+    viewer.addEventListener("load", () => { load.hidden = true; });
+    viewer.addEventListener("error", failed);
+    // Первое касание — подсказка исчезает
+    viewer.addEventListener("pointerdown", () => {
+      gallery.hintSeen = true;
+      hint.classList.add("is-gone");
+    });
+    view.prepend(viewer);
+  }).catch(failed);
+}
+
 // startIndex — номер фото, как на странице торта (0 — главное).
 // Если у торта есть вращение, оно стоит первым слайдом, перед главным фото
 function openGallery(cakeId, opener, startIndex = 0) {
@@ -1412,7 +1519,10 @@ function openGallery(cakeId, opener, startIndex = 0) {
   gallery.cake = cake;
   gallery.items = galleryOf(cake);
   gallery.opener = opener;
-  if (cake.spin && window.TortSpin) {
+  if (cake.model) {
+    gallery.items.unshift({ model: true, label: "Пример 360°" });
+    startIndex += 1;
+  } else if (cake.spin && window.TortSpin) {
     gallery.items.unshift({
       spin: true,
       label: cake.spin.demo ? "Пример 360°" : "360°",
@@ -1424,7 +1534,7 @@ function openGallery(cakeId, opener, startIndex = 0) {
   $("#lb-title").textContent = cake.name;
   $("#lb-thumbs").innerHTML = gallery.items.map((item, i) => `
     <button class="lb__thumb" type="button" data-index="${i}" aria-label="${escapeHtml(item.label)}">
-      ${photoHTML(item.base, "", cake.tint)}
+      ${item.model ? '<span class="media lb__thumb-3d">360°</span>' : photoHTML(item.base, "", cake.tint)}
       ${escapeHtml(item.label)}
     </button>`).join("");
 
@@ -1454,7 +1564,9 @@ function showSlide(index, dir = 0) {
 
   gallery.spin?.destroy();
   gallery.spin = null;
-  if (item.spin) {
+  if (item.model) {
+    showModelSlide(frame, gallery.cake);
+  } else if (item.spin) {
     // Слайд 360°: в галерее сразу грузим все кадры
     frame.innerHTML = '<div class="media lb__spin"></div>';
     gallery.spin = new TortSpin.Viewer($(".lb__spin", frame), gallery.cake.spin, {
@@ -1507,7 +1619,7 @@ function setupGallery() {
     if (event.target.id === "lb-stage") closeGallery();
   });
   $("#lb-stage").addEventListener("pointerdown", (event) => {
-    if (event.target.closest(".spin")) {
+    if (event.target.closest(".spin, model-viewer")) {
       startX = null; // на слайде 360° свайп крутит торт, листать — стрелками
       return;
     }
@@ -1529,6 +1641,7 @@ function setupGallery() {
   // Стрелки на клавиатуре
   document.addEventListener("keydown", (event) => {
     if ($("#lightbox").hidden) return;
+    if (event.target.closest?.("model-viewer")) return; // стрелками крутят модель
     if (event.key === "ArrowRight") showSlide(gallery.index + 1, 1);
     if (event.key === "ArrowLeft") showSlide(gallery.index - 1, -1);
   });

@@ -3652,6 +3652,7 @@ main {
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 /* Маленькие карточки на телефоне — значок поменьше */
@@ -3662,6 +3663,14 @@ main {
     left: 5px;
     padding: 2px 6px;
     font-size: 10px;
+  }
+
+  .catalog.cols-4 .spin-badge {
+    top: 4px;
+    left: 4px;
+    padding: 2px 5px;
+    font-size: 9px;
+    letter-spacing: 0;
   }
 
   /* В 3–4 в ряд вращения на карточке нет — и подсказку не показываем */
@@ -3678,4 +3687,81 @@ main {
 
 .lb__spin .spin__img {
   object-fit: contain;
+}
+
+/* ===================== Пример 360°: 3D-модель в галерее ===================== */
+
+.lb__model {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 22px;
+  background: #fbf3ea; /* светлый кремовый */
+  color: #4a3550;
+}
+
+.lb__model-view {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.lb__model-view model-viewer {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  --poster-color: transparent;
+  outline: none;
+}
+
+.lb__model-load {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #8a6f7d;
+  font-size: 14px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.lb__model-load[hidden] {
+  display: none;
+}
+
+.lb__model-note {
+  margin: 0;
+  padding: 10px 14px 12px;
+  border-top: 1px solid rgba(74, 53, 80, 0.1);
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.lb__model-credit {
+  display: block;
+  margin-top: 3px;
+  color: #8a6f7d;
+  font-size: 11px;
+}
+
+.lb__model-credit[hidden] {
+  display: none;
+}
+
+.lb__model-credit a {
+  color: inherit;
+}
+
+/* Миниатюра слайда с моделью */
+.lb__thumb-3d {
+  display: grid;
+  place-items: center;
+  background: #fbf3ea;
+  color: #e0006a;
+  font-size: 13px;
+  font-weight: 800;
 }
