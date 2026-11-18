@@ -146,14 +146,17 @@ function guestsText(kg) {
 }
 
 function renderFilters() {
+  // Показываем только поводы, под которые есть хотя бы один торт
+  const shown = FILTERS.filter((filter) => filter.id === "all" || CAKES.some((cake) => cake.tags.includes(filter.id)));
+
   // Плашки по поводу наверху: быстрый доступ, можно выбрать несколько
-  $("#filters").innerHTML = FILTERS.map(
+  $("#filters").innerHTML = shown.map(
     (filter) =>
       `<button class="chip" type="button" data-filter="${escapeHtml(filter.id)}" aria-pressed="${isTagOn(filter.id)}">${escapeHtml(filter.label)}</button>`
   ).join("");
 
   // Те же поводы в панели фильтров
-  $("#filter-tags").innerHTML = FILTERS.filter((filter) => filter.id !== "all")
+  $("#filter-tags").innerHTML = shown.filter((filter) => filter.id !== "all")
     .map((filter) => `
       <button class="tag-pick" type="button" data-filter="${escapeHtml(filter.id)}" aria-pressed="${isTagOn(filter.id)}">
         <span class="tag-pick__box" aria-hidden="true"></span>${escapeHtml(filter.label)}
@@ -740,6 +743,7 @@ function openRate(cakeId, opener) {
   }
 
   $("#rate-error").hidden = true;
+  $("#r-name").classList.remove("is-invalid");
   $("#rate-thanks").hidden = true;
   $("#rate-form").hidden = false;
   $("#rate-modal").hidden = false;
@@ -756,9 +760,18 @@ function closeRate() {
 }
 
 function sendRating() {
-  if (!rateNow.score) {
-    $("#rate-error").textContent = "Поставьте оценку от 1 до 10.";
+  // Нужны оценка и имя — как в заказе, ошибка одинаковая: «Напишите имя»
+  const name = $("#r-name");
+  const problems = [];
+  if (!rateNow.score) problems.push("Поставьте оценку от 1 до 10");
+  if (!name.value.trim()) {
+    problems.push("Напишите имя");
+    name.classList.add("is-invalid");
+  }
+  if (problems.length) {
+    $("#rate-error").textContent = problems.join(". ") + ".";
     $("#rate-error").hidden = false;
+    if (!name.value.trim() && rateNow.score) name.focus();
     return;
   }
   const all = loadRatings();
@@ -789,6 +802,10 @@ function setupRate() {
   });
   $("#rate-send").addEventListener("click", sendRating);
   $("#rate-form").addEventListener("submit", (event) => event.preventDefault());
+  $("#r-name").addEventListener("input", (event) => {
+    event.target.classList.remove("is-invalid");
+    $("#rate-error").hidden = true;
+  });
   $("#rate-close").addEventListener("click", closeRate);
   $("#rate-modal").addEventListener("click", (event) => {
     if (event.target.id === "rate-modal") closeRate();

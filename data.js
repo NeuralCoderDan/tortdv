@@ -62,7 +62,7 @@ const CONFIG = {
       title: "Получение торта",
       paragraphs: [
         "Самовывоз: пер. Фабричный, 25, Хабаровск. Время согласуем заранее.",
-        "Доставка по Хабаровску — Яндекс.Доставка. Она оплачивается отдельно по тарифу сервиса, стоимость зависит от адреса и времени.",
+        "Доставка по Хабаровску — Яндекс.Доставка. Стоимость рассчитывается при заказе: она зависит от адреса и времени.",
         "Заказы принимаем минимум за 7 дней до нужной даты."
       ]
     }
@@ -78,11 +78,18 @@ const RATINGS_ARE_DEMO = true;
 
 // Поводы. Можно выбрать несколько сразу: покажем торты, у которых есть хотя бы один.
 // Новый повод добавляется одной строкой здесь и тегом у торта в CAKES.
+// Повод без единого торта на сайте не показывается — появится сам,
+// когда у какого-нибудь торта в CAKES будет этот тег (например "wedding")
 const FILTERS = [
   { id: "all", label: "Все торты" },
   { id: "birthday", label: "День рождения" },
   { id: "kids", label: "Детский" },
-  { id: "jubilee", label: "Юбилей" }
+  { id: "jubilee", label: "Юбилей" },
+  { id: "wedding", label: "Свадьба" },
+  { id: "corporate", label: "Корпоратив" },
+  { id: "bento", label: "Бенто" },
+  { id: "mousse", label: "Муссовый" },
+  { id: "other", label: "Другое" }
 ];
 
 // Порядок карточек в каталоге
@@ -134,7 +141,7 @@ const CAKES = [
     photo: "images/cake2.webp",
     angles: [],
     fixed: { price: 3500, weight: "750–800 г" },
-    tags: ["birthday", "kids"],
+    tags: ["birthday", "kids", "bento"],
     tint: "#e6e3f3",
     about: {
       facts: [
@@ -160,7 +167,7 @@ const CAKES = [
     photo: "images/cake3.webp",
     angles: [],
     pricePerKg: 4200,
-    tags: ["birthday", "jubilee"],
+    tags: ["birthday", "jubilee", "mousse"],
     tint: "#f6dfe2",
     about: {
       facts: [
@@ -210,7 +217,7 @@ const CAKES = [
     photo: "images/cake6.webp",
     angles: [],
     pricePerKg: 5000,
-    tags: ["birthday"],
+    tags: ["birthday", "other"],
     tint: "#1b1420"
   },
   {
@@ -222,7 +229,7 @@ const CAKES = [
     photo: "images/cake7.webp",
     angles: [],
     pricePerKg: 4400,
-    tags: ["birthday"],
+    tags: ["birthday", "other"],
     tint: "#1b1420"
   },
   {

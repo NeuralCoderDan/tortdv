@@ -29,7 +29,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=31">
+  <link rel="stylesheet" href="style.css?v=32">
 </head>
 <body>
 
@@ -85,8 +85,8 @@
         </div>
 
         <!-- Плавающий торт: покачивается и слегка поворачивается, тень под ним «дышит» -->
-        <div class="hero__cake" aria-hidden="true">
-          <img class="hero__cake-img" src="images/cake1.webp" alt="" width="778" height="786">
+        <div class="hero__cake">
+          <img class="hero__cake-img" src="images/cake1.webp" alt="Торт «Наполеон» с живой зеленью и именной табличкой" width="778" height="786">
           <span class="hero__cake-shadow"></span>
         </div>
       </div>
@@ -239,7 +239,7 @@
         <li><span>Самовывоз</span><address class="footer__address" id="footer-address">пер. Фабричный, 25, Хабаровск</address></li>
         <li><span>Телефон</span><a id="footer-tel" href="#"></a></li>
         <li><span>Почта</span><a href="mailto:zakaz@tortdv.ru">zakaz@tortdv.ru</a></li>
-        <li><span>Доставка</span>Яндекс.Доставка, оплачивается отдельно</li>
+        <li><span>Доставка</span>Яндекс.Доставка — стоимость рассчитывается при заказе</li>
         <!-- Часы работы и отметку «Сейчас работаем» подставляет script.js из data.js -->
         <li>
           <span>Часы работы</span><b class="hours" id="footer-hours"></b><b class="hours hours--off" id="footer-dayoff"></b>
@@ -324,8 +324,8 @@
 
       <form class="form order__form" id="rate-form" novalidate>
         <label class="field">
-          <span class="field__label">Ваше имя <i>(необязательно)</i></span>
-          <input type="text" id="r-name" autocomplete="name" maxlength="60">
+          <span class="field__label">Ваше имя</span>
+          <input type="text" id="r-name" autocomplete="name" maxlength="60" required>
         </label>
         <label class="field">
           <span class="field__label">Комментарий <i>(необязательно)</i></span>
@@ -446,7 +446,7 @@
   </div>
 
   <!-- Сначала данные, потом логика -->
-  <script src="data.js?v=31"></script>
-  <script src="script.js?v=31"></script>
+  <script src="data.js?v=32"></script>
+  <script src="script.js?v=32"></script>
 </body>
 </html>
