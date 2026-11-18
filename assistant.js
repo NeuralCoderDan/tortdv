@@ -9,10 +9,24 @@
   const cfg = typeof ASSISTANT_CONFIG === "object" ? ASSISTANT_CONFIG : null;
   if (!cfg) return;
 
+  // Показ через туннель: ссылка с ?assistant=АДРЕС отправляет запросы на Ollama на вашем Mac (модель Qwen).
+  // Разрешены только адреса туннелей, чтобы чужой адрес не мог перехватывать переписку
+  const TUNNEL = (() => {
+    try {
+      const value = new URLSearchParams(location.search).get("assistant");
+      if (value && /^https:\/\/[a-z0-9-]+\.(lhr\.life|lhr\.pro|localhost\.run)$/i.test(value)) return value;
+    } catch (e) { /* адрес страницы не прочитался — работаем по обычному адресу */ }
+    return null;
+  })();
+  const ENDPOINT = TUNNEL ? `${TUNNEL}/v1/chat/completions` : cfg.endpoint;
+  const MODEL = TUNNEL ? "qwen2.5:7b" : cfg.model;
+
   const STORE_KEY = "tortdv-assistant"; // история — только в этой вкладке (sessionStorage)
   const GREETING = "Привет! Я помогу подобрать торт 🎂 Расскажите, какой праздник?";
   const QUICK = ["Подобрать торт", "Торт на день рождения", "Сколько нужно кг?", "Как заказать?"];
-  const RESTING = "Помощник сейчас отдыхает 😴 Напишите нам в WhatsApp";
+  const RESTING = "Сейчас я не могу ответить на ваш вопрос. Напишите нам в WhatsApp — ответим сразу 🙂";
+  const RESTING_AGAIN = "Пока не получилось ответить. Попробуйте ещё раз чуть позже или напишите нам в WhatsApp.";
+  const THINKING_LONG = "Ещё думаю, подождите немного…";
   const LIMIT_TEXT = "Давайте продолжим в WhatsApp";
 
   // ===================== Каталог =====================
@@ -360,11 +374,11 @@
 
     const controller = new AbortController();
     let timer = setTimeout(() => controller.abort(), cfg.firstTokenTimeoutMs);
-    const response = await fetch(cfg.endpoint, {
+    const response = await fetch(ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: cfg.model,
+        model: MODEL,
         temperature: cfg.temperature,
         stream: true,
         messages: [
@@ -454,6 +468,18 @@
       raw = "";
     }
 
+    // Не ответила — не сдаёмся сразу: ждём и пробуем ещё раз, показывая, что помощник думает
+    for (let attempt = 1; !raw.trim() && attempt <= 2; attempt++) {
+      body.textContent = THINKING_LONG;
+      await new Promise((resolve) => setTimeout(resolve, 6000));
+      body.innerHTML = '<span class="ai__dots" aria-label="Помощник печатает"><i></i><i></i><i></i></span>';
+      try {
+        raw = await streamAnswer(onText, false, facts);
+      } catch (e) {
+        raw = "";
+      }
+    }
+
     row.classList.remove("is-typing");
     if (raw.trim()) {
       body.textContent = visibleText(raw) || "Вот что я нашёл:";
@@ -466,7 +492,8 @@
       // Неудачная попытка не съедает сообщение из лимита
       state.sent = Math.max(0, state.sent - 1);
       row.remove();
-      const notice = { role: "notice", content: RESTING };
+      const notice = { role: "notice", content: state.failures ? RESTING_AGAIN : RESTING };
+      state.failures = (state.failures || 0) + 1;
       state.messages.push(notice);
       renderMessage(notice);
     }
