@@ -1,18 +1,18 @@
 /* ===================== ИИ-помощник «Помощник ТортДВ» ===================== */
 
-/* Круглая кнопка в правом нижнем углу. На телефоне и планшете — над липкой кнопкой «Заказать торт» */
+/* Кнопка-подпись «ИИ-помощник» в правом нижнем углу. На телефоне — над липкой кнопкой «Заказать торт» */
 .ai-fab {
   position: fixed;
   right: 14px;
   bottom: calc(var(--bar-h) + 6px + env(safe-area-inset-bottom));
   z-index: 70;
-  display: grid;
-  place-items: center;
-  width: 58px;
-  height: 58px;
-  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 52px;
+  padding: 0 18px 0 13px;
   border: none;
-  border-radius: 50%;
+  border-radius: 999px;
   background: linear-gradient(135deg, #e0006a, #9b00c9);
   color: #fff;
   box-shadow: 0 8px 22px -6px rgba(200, 21, 92, 0.6);
@@ -21,13 +21,20 @@
 }
 
 .ai-fab svg {
-  width: 28px;
-  height: 28px;
+  flex: none;
+  width: 26px;
+  height: 26px;
   fill: currentColor;
 }
 
 .ai-fab svg circle {
   fill: #e0006a;
+}
+
+.ai-fab__text {
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .ai-fab:hover {
@@ -47,6 +54,13 @@
   .ai-fab {
     right: 24px;
     bottom: 24px;
+  }
+}
+
+/* Совсем узкий экран: только значок с подписью мельче */
+@media (max-width: 340px) {
+  .ai-fab__text {
+    font-size: 13px;
   }
 }
 

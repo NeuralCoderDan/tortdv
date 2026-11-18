@@ -190,10 +190,11 @@
   const fab = document.createElement("button");
   fab.className = "ai-fab";
   fab.type = "button";
-  fab.setAttribute("aria-label", "Открыть чат с помощником");
+  fab.setAttribute("aria-label", "Открыть чат: ИИ-помощник");
   fab.setAttribute("aria-expanded", "false");
   fab.innerHTML = `
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.2 3.6c-.5.4-1.3.1-1.3-.6V16h0A2.5 2.5 0 0 1 4 13.5z"/><circle cx="8.5" cy="9.5" r="1.2"/><circle cx="12" cy="9.5" r="1.2"/><circle cx="15.5" cy="9.5" r="1.2"/></svg>`;
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.2 3.6c-.5.4-1.3.1-1.3-.6V16h0A2.5 2.5 0 0 1 4 13.5z"/><circle cx="8.5" cy="9.5" r="1.2"/><circle cx="12" cy="9.5" r="1.2"/><circle cx="15.5" cy="9.5" r="1.2"/></svg>
+    <span class="ai-fab__text">ИИ-помощник</span>`;
 
   const panel = document.createElement("section");
   panel.className = "ai";
