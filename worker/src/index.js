@@ -1,4 +1,4 @@
-// Сервер-посредник «Помощник ТортДВ»: принимает сообщения с сайта, проверяет их
+// Сервер-посредник ИИ-помощника: принимает сообщения с сайта, проверяет их
 // и передаёт бесплатной модели на OpenRouter. Ключ к модели живёт только здесь.
 //
 // Защита:
@@ -9,7 +9,7 @@
 //  - модель и длина ответа задаются здесь, а не сайтом.
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const PROMPT_START = "Ты — дружелюбный консультант кондитерской «ТортДВ»";
+const PROMPT_START = "Ты — дружелюбный консультант кондитерской";
 const MAX_BODY = 40000;        // байт в запросе
 const MAX_SYSTEM = 12000;      // символов в системном промпте (с каталогом)
 const MAX_NOTE = 1200;         // символов в справке сайта
@@ -101,7 +101,7 @@ export default {
     if (request.method === "OPTIONS") {
       return ok ? new Response(null, { status: 204, headers: cors(origin) }) : new Response(null, { status: 403 });
     }
-    if (!ok) return reply(403, "Запросы только с сайта ТортДВ", null);
+    if (!ok) return reply(403, "Запросы только с сайта", null);
     if (request.method !== "POST") return reply(405, "Только POST", origin);
     if (!env.OPENROUTER_API_KEY) return reply(503, "Ключ модели не настроен", origin);
 
@@ -130,7 +130,7 @@ export default {
           Authorization: `Bearer ${env.OPENROUTER_API_KEY}`,
           "Content-Type": "application/json",
           "HTTP-Referer": "https://neuralcoderdan.github.io/tortdv/",
-          "X-Title": "TortDV"
+          "X-Title": "Cake shop demo"
         },
         body: JSON.stringify({
           model,

@@ -1,9 +1,11 @@
-# Сервер-посредник для ИИ-помощника «Помощник ТортДВ» (Cloudflare Workers, бесплатный тариф).
+# Сервер-посредник для ИИ-помощника (Cloudflare Workers, бесплатный тариф).
 # Ключ OpenRouter хранится в секрете OPENROUTER_API_KEY (wrangler secret put), не в этом файле.
 
 name = "tortdv-assistant"
 main = "src/index.js"
 compatibility_date = "2026-06-01"
+# Выключено: адрес workers.dev отключён, Worker не отвечает. Чтобы вернуть — поставьте true и выполните deploy.
+workers_dev = false
 
 [vars]
 # Бесплатные модели OpenRouter: основная и запасная (если основная занята).

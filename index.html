@@ -3,34 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>ТортДВ — торты на заказ в Хабаровске</title>
+  <title>Торты на заказ в Хабаровске</title>
   <meta name="description" content="Торты на заказ в Хабаровске: выберите торт и вес, укажите дату и оформите заказ.">
 
   <!-- Цвет панели браузера на телефоне — фирменный малиновый -->
   <meta name="theme-color" content="#e0006a">
 
   <!-- Превью ссылки в WhatsApp и Telegram (Open Graph).
-       Картинка в JPG: WebP показывают не все мессенджеры -->
+       Без картинки — только текст -->
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="ТортДВ">
   <meta property="og:locale" content="ru_RU">
-  <meta property="og:title" content="ТортДВ — торты на заказ в Хабаровске">
+  <meta property="og:title" content="Торты на заказ в Хабаровске">
   <meta property="og:description" content="Торты на заказ, пер. Фабричный, 25, Хабаровск. Выберите торт, вес и дату — оформите заказ за 2 минуты через WhatsApp.">
-  <meta property="og:image" content="https://neuralcoderdan.github.io/tortdv/images/og-cake.jpg">
-  <meta property="og:image:type" content="image/jpeg">
-  <meta property="og:image:width" content="892">
-  <meta property="og:image:height" content="886">
-  <meta property="og:image:alt" content="Бенто-торт Happy Birthday в розово-голубых тонах">
   <meta property="og:url" content="https://neuralcoderdan.github.io/tortdv/">
-  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:card" content="summary">
 
   <!-- Шрифт: Onest для заголовков и текста -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=35">
-  <link rel="stylesheet" href="assistant.css?v=37">
+  <link rel="stylesheet" href="style.css?v=36">
+  <link rel="stylesheet" href="assistant.css?v=38">
 </head>
 <body>
 
@@ -39,8 +33,6 @@
   <!-- Шапка: логотип, «Позвонить» и «WhatsApp», меню, корзина (на компьютере) -->
   <header class="header" id="top">
     <div class="container header__inner">
-      <!-- Логотип: картинка из images/logo.png, по нажатию — наверх страницы -->
-      <a href="#top" class="logo" id="logo"><img src="images/logo.png" alt="ТортДВ" height="52" style="display:block"></a>
       <!-- Номера подставляет script.js из data.js -->
       <div class="header__contacts">
         <a class="hbtn" id="head-call" href="#">
@@ -87,7 +79,9 @@
 
         <!-- Плавающий торт: покачивается и слегка поворачивается, тень под ним «дышит» -->
         <div class="hero__cake">
-          <img class="hero__cake-img" src="images/cake1.webp" alt="Торт «Наполеон» с живой зеленью и именной табличкой" width="778" height="786">
+          <div class="hero__cake-img hero__cake-ph" aria-hidden="true">
+            <svg viewBox="0 0 48 48"><path d="M8 26h32v14H8z"/><path d="M11 26v-7h26v7"/><path d="M8 32c4 3 8 3 12 0s8-3 12 0 6 2 8 0"/><path d="M24 19v-6"/><path d="M24 10c1.5 0 1.5-2 0-3.5-1.5 1.5-1.5 3.5 0 3.5Z"/></svg>
+          </div>
           <span class="hero__cake-shadow"></span>
         </div>
       </div>
@@ -235,11 +229,10 @@
   <!-- Контакты -->
   <footer class="footer" id="contacts">
     <div class="container">
-      <p class="footer__brand">ТортДВ</p>
+      <p class="footer__brand">Торты на заказ</p>
       <ul class="footer__list">
         <li><span>Самовывоз</span><address class="footer__address" id="footer-address">пер. Фабричный, 25, Хабаровск</address></li>
         <li><span>Телефон</span><a id="footer-tel" href="#"></a></li>
-        <li><span>Почта</span><a href="mailto:zakaz@tortdv.ru">zakaz@tortdv.ru</a></li>
         <li><span>Доставка</span>Яндекс.Доставка — стоимость рассчитывается при заказе</li>
         <!-- Часы работы и отметку «Сейчас работаем» подставляет script.js из data.js -->
         <li>
@@ -447,10 +440,10 @@
   </div>
 
   <!-- Сначала данные, потом логика -->
-  <script src="data.js?v=35"></script>
-  <script src="config.js?v=36"></script>
+  <script src="data.js?v=37"></script>
+  <script src="config.js?v=37"></script>
   <script src="spin.js?v=35"></script>
   <script src="script.js?v=35"></script>
-  <script src="assistant.js?v=41"></script>
+  <script src="assistant.js?v=42"></script>
 </body>
 </html>

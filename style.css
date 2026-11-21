@@ -2765,13 +2765,15 @@ main {
   color: #fff;
 }
 
-/* Фон: то же фото, но размытое и затемнённое — чёткий торт плавает поверх и не двоится */
+/* Фон: мягкий тёмный градиент в цветах сайта (без фото) */
 .hero::before {
   content: "";
   position: absolute;
-  inset: -40px; /* запас, чтобы размытые края не просвечивали */
-  background: url("images/cake1.webp") center / cover no-repeat;
-  filter: blur(22px) brightness(0.45);
+  inset: 0;
+  background:
+    radial-gradient(circle at 75% 30%, rgba(200, 21, 92, 0.55), transparent 60%),
+    radial-gradient(circle at 20% 80%, rgba(155, 0, 201, 0.35), transparent 55%),
+    var(--choco);
 }
 
 .hero__inner {
@@ -2820,6 +2822,23 @@ main {
   object-fit: cover;
   border-radius: 50%;
   animation: cake-float 3s ease-in-out infinite alternate;
+}
+
+/* Заглушка вместо фото: светлый круг со значком торта */
+.hero__cake-ph {
+  display: grid;
+  place-items: center;
+  background: var(--powder);
+}
+
+.hero__cake-ph svg {
+  width: 46%;
+  height: 46%;
+  fill: none;
+  stroke: var(--rose);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* Тень под тортом: торт поднимается — тень шире и бледнее */
